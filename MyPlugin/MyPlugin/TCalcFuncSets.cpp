@@ -298,6 +298,18 @@ BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
 		return FALSE;
 	}			
 
+	//这里再加一个条件，如果中间只有4根线（不包括顶底分型），不破新高或者新低都不能算
+	if(nhigh - nlow <= 8)
+	{
+		for (int n = nlow + 1; n < nhigh; n++)
+		{
+			if(ks[n].high >= ks[nhigh].high)
+			{
+				return FALSE;
+			}
+		}
+	}
+
 	if(1)
 	{
 		int nTop = nlow;
@@ -363,9 +375,16 @@ BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
 	{
 		//这里属于放宽条件，在两点间只要是5根k线自由排列都行
 		int nValid = 0;
-		KLine kln[300];
-		ZeroMemory((char*)kln, 300*sizeof(KLine));
+		static KLine *kln = NULL;
+		if(kln == NULL)
+		{
+			kln = new KLine[2000];
+		}
 
+		ZeroMemory((char*)kln, 2000*sizeof(KLine));
+
+		//kln[nValid] = ks[nlow];
+		//nValid++;
 		for(int n = nlow; n <= nhigh; n++)
 		{
 			if(ks[n].Ext.nMegre != -1)
@@ -374,6 +393,10 @@ BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
 				{
 					kln[nValid] = ks[n];
 					nValid++;
+					if(nValid > 1990)
+					{
+						return FALSE;
+					}
 				}
 			}
 		}
@@ -423,6 +446,19 @@ BOOL bIsOne_Open_Down(KLine* ks, int nlow, int nhigh)
 	{
 		return FALSE;
 	}	
+
+	//这里再加一个条件，如果中间只有4根线（不包括顶底分型），不破新高或者新低都不能算
+	if(nhigh - nlow <= 8)
+	{
+		for (int n = nlow + 1; n < nhigh; n++)
+		{
+			if(ks[n].low <= ks[nhigh].low)
+			{
+				return FALSE;
+			}
+		}
+	}
+
 
 	if(1)
 	{
@@ -491,9 +527,19 @@ BOOL bIsOne_Open_Down(KLine* ks, int nlow, int nhigh)
 		//这里属于放宽条件，在两点间只要是5根k线自由排列都行
 		int nValid = 0;
 
-		KLine kln[300];
-		ZeroMemory((char*)kln, 300*sizeof(KLine));
+		//KLine kln[300];
+		//ZeroMemory((char*)kln, 300*sizeof(KLine));
+		static KLine *kln = NULL;
+		if(kln == NULL)
+		{
+			kln = new KLine[2000];
+		}
 
+		ZeroMemory((char*)kln, 2000*sizeof(KLine));
+
+
+		//kln[nValid] = ks[nlow];
+		//nValid++;
 		for(int n = nlow; n <= nhigh; n++)
 		{
 			if(ks[n].Ext.nMegre != -1)
@@ -502,6 +548,10 @@ BOOL bIsOne_Open_Down(KLine* ks, int nlow, int nhigh)
 				{
 					kln[nValid] = ks[n];
 					nValid++;
+					if(nValid > 1990)
+					{
+						return FALSE;
+					}
 				}
 			}
 		}
@@ -1022,10 +1072,10 @@ void TestPlugin3(int DataLen,float* High,float* Low)
 			curr_k.low >= 4.349   &&
 			curr_k.low <  4.351)
 		{
-			if(IsDebuggerPresent() == TRUE)
+			/*if(IsDebuggerPresent() == TRUE)
 			{
 				__asm int 3
-			}
+			}*/
 		}
 
 		/*
@@ -2797,8 +2847,229 @@ typedef struct _Pair_Data
 	ZhongShuData d2; //后一个数据
 
 	float fXieLv;
+	float fChangDu;
 
 }Pair_Data;
+
+//对5分钟的k线来一个另外一个函数试试
+BOOL ZhongShuAnalu_BeiLi_5Min()
+{
+
+	OutputDebugStringA("[chs] ZhongShuAnalu_BeiLi");
+	std::vector<ZhongShuData> g_vecZhongshu;
+
+	BOOL bFlag = FALSE;
+
+	ZhongShuData ZSData;
+
+	float fkk_max;
+	float fkk_min;
+
+	for (int n = 0; n < nSize_xd_l; n++)
+	{
+		if(g_xd_l[n].XianDuan_nprop == 1)
+		{
+			bFlag = TRUE;
+			ZSData.fMax = g_xd_l[n].fMax;
+			ZSData.fMin = g_xd_l[n].fMin;
+
+			ZSData.nXDStart_Index = n;
+			ZSData.nXDStart_Before_Index = n-1;
+
+			fkk_max = g_xd_l[n].PointHigh.fVal;
+			fkk_min = g_xd_l[n].PointLow.fVal;
+			//起点，找最左边的的
+			if(g_xd_l[n].PointHigh.nIndex < g_xd_l[n].PointLow.nIndex)
+			{
+				ZSData.nIn_Index = g_xd_l[n].PointHigh.nIndex;
+				ZSData.fIn_Price = g_xd_l[n].PointHigh.fVal;
+
+			}
+			else
+			{
+				ZSData.nIn_Index = g_xd_l[n].PointLow.nIndex;
+				ZSData.fIn_Price = g_xd_l[n].PointLow.fVal;
+
+			}
+		}
+
+		if(g_xd_l[n].XianDuan_nprop == 2)
+		{
+			bFlag = FALSE;
+			fkk_max = max(fkk_max, g_xd_l[n].PointHigh.fVal);
+			fkk_min = min(fkk_min, g_xd_l[n].PointLow.fVal);
+
+			ZSData.fkk_Max = fkk_max;
+			ZSData.fkk_Min = fkk_min;
+	
+			//
+			ZSData.nXDEnd_Index = n;
+
+			//起点，找最左边的的
+			if(g_xd_l[n].PointHigh.nIndex > g_xd_l[n].PointLow.nIndex)
+			{
+				ZSData.nOut_Index = g_xd_l[n].PointHigh.nIndex;
+				ZSData.fOut_Price = g_xd_l[n].PointHigh.fVal;
+			}
+			else
+			{
+				ZSData.nOut_Index = g_xd_l[n].PointLow.nIndex;
+				ZSData.fOut_Price = g_xd_l[n].PointLow.fVal;
+			}
+
+			g_vecZhongshu.push_back(ZSData);
+		}
+
+		if(bFlag == TRUE)
+		{
+			fkk_max = max(fkk_max, g_xd_l[n].PointHigh.fVal);
+			fkk_min = min(fkk_min, g_xd_l[n].PointLow.fVal);
+		}
+	}
+
+	//数据收集完毕以后，开始分析
+	int nSize = g_vecZhongshu.size();
+
+	if(nSize > 2)
+	{
+		std::vector<Pair_Data>  pairdata;
+		//找到上一个中枢，如果不是向上的，并且没有中枢重叠的话就直接退出
+
+		ZSData = g_vecZhongshu[nSize-1];
+
+		int nCount = 0; //计数，有多少重是不重叠
+		for (int n = nSize-2; n >= 0; n--)
+		{
+			BOOL bChongDie = FALSE;
+			if(g_vecZhongshu[n].fMin > ZSData.fMax)
+			{
+				if(g_vecZhongshu[n].fkk_Min < ZSData.fkk_Max)
+				{
+					bChongDie = TRUE;
+				}
+				else
+				{
+					Pair_Data pd;
+					pd.d1 = g_vecZhongshu[n];
+					pd.d2 = ZSData;
+					pd.fXieLv = (pd.d1.fOut_Price - pd.d2.fIn_Price)/(pd.d2.nIn_Index-pd.d1.nOut_Index);
+
+					if(ZSData.nXDEnd_Index - ZSData.nXDStart_Index >= 8 && pairdata.size() < 2)
+					{
+						return FALSE;
+					}
+					pairdata.push_back(pd);
+
+					nCount++;
+				}
+				
+				
+			}
+			else
+			{
+				//break;
+				//判断一下是否是已经有中枢交集，如果有就忽略,
+				if ( ZSData.fMin > g_vecZhongshu[n].fMax &&   ZSData.fkk_Min >  g_vecZhongshu[n].fkk_Max )
+				{
+					break;
+				}
+				else
+				{
+					bChongDie = TRUE;
+				}
+
+			}
+
+			int nIndex = ZSData.nOut_Index;
+			float fval = ZSData.fOut_Price;
+			int xdtmp = ZSData.nXDEnd_Index;
+	
+			float fkkkmax = ZSData.fkk_Max;
+			float fkkkmin = ZSData.fkk_Min;
+
+			ZSData = g_vecZhongshu[n];
+
+			if(bChongDie)
+			{
+				ZSData.nOut_Index = nIndex;
+				ZSData.fOut_Price = fval;
+				ZSData.nXDEnd_Index = xdtmp;//把结尾点
+				ZSData.fkk_Max = max(fkkkmax, ZSData.fkk_Max);//算上重叠
+				ZSData.fkk_Min = min(fkkkmin, ZSData.fkk_Min);//
+			}
+		}
+
+		delete[] g_xd_l;
+
+		//如果有
+		if(nCount >= 2)
+		{
+
+			//return TRUE;
+			//开始判断斜率1,粗略判断
+			//if(pairdata[0].fXieLv < pairdata[1].fXieLv)
+			//{
+			//	OutputDebugStringA("[chs] 离开 ZhongShuAnalu_BeiLi");
+			//	return TRUE;
+			//}
+
+			//如果是只有两个中枢，
+			//首先d1的前一笔必须是向下的，并且有斜率
+			//d2必须只有4笔，憋屈
+			if(nCount == 1)
+			{
+				//d1的前一笔必须是向下的, d2也是向下的
+				//if( /*   g_xd_l[pairdata[0].d1.nXDStart_Before_Index].Bi_Direction == DOWN 
+				//	&& g_xd_l[pairdata[0].d2.nXDStart_Before_Index].Bi_Direction == DOWN*/
+				//	/*&& (pairdata[0].d2.nXDEnd_Index - pairdata[0].d2.nXDStart_Index) == 3*/)
+				{
+
+					int nXdIndex = pairdata[0].d1.nXDStart_Before_Index;
+
+					if(g_xd_l[nXdIndex].Bi_Direction == DOWN)
+					{
+						return FALSE;
+					}
+					float fVDist_d1 = g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointHigh.fVal - g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointLow.fVal;
+					float fVDist_d2 = pairdata[0].d1.fOut_Price - pairdata[0].d2.fIn_Price;
+					if(fVDist_d1 > fVDist_d2)
+					{
+						return TRUE;
+					}
+
+					float fxlv = (g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointHigh.fVal - g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointLow.fVal)/(float)(g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointHigh.nIndex - g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointLow.nIndex);
+					if(fxlv > pairdata[0].fXieLv)
+					{
+						return TRUE;
+					}
+				}
+			}
+			else
+			{
+				float fVDist_d1 = pairdata[1].d1.fOut_Price - pairdata[1].d2.fIn_Price;
+				float fVDist_d2 = pairdata[0].d1.fOut_Price - pairdata[0].d2.fIn_Price;
+				if(fVDist_d1 > fVDist_d2)
+				{
+					return TRUE;
+				}
+				//if(    g_xd_l[pairdata[0].d1.nXDStart_Before_Index].Bi_Direction == DOWN 
+				//	&& g_xd_l[pairdata[0].d2.nXDStart_Before_Index].Bi_Direction == DOWN)
+				{
+					if(  pairdata[0].fXieLv < pairdata[1].fXieLv /*&& (pairdata[0].d2.nXDEnd_Index - pairdata[0].d2.nXDStart_Index) == 3 */)
+					{
+						return TRUE;
+					}
+				}
+				
+			}
+
+		}
+	}
+	
+	OutputDebugStringA("[chs] 离开 ZhongShuAnalu_BeiLi");
+	return FALSE;
+}
+
 
 
 //对中枢进行分析，如果是用三重中枢，并且是背离的画就返回TRUE
@@ -2831,16 +3102,12 @@ BOOL ZhongShuAnalu_BeiLi()
 			//起点，找最左边的的
 			if(g_xd_l[n].PointHigh.nIndex < g_xd_l[n].PointLow.nIndex)
 			{
-				//xIndex1 = xd1.PointHigh.nIndex;
-				//Out[g_xd_l[n].PointHigh.nIndex] = g_xd_l[n].fMax;
 				ZSData.nIn_Index = g_xd_l[n].PointHigh.nIndex;
 				ZSData.fIn_Price = g_xd_l[n].PointHigh.fVal;
 
 			}
 			else
 			{
-				//xIndex1 = xd1.PointLow.nIndex;
-				//Out[g_xd_l[n].PointLow.nIndex] = g_xd_l[n].fMax;
 				ZSData.nIn_Index = g_xd_l[n].PointLow.nIndex;
 				ZSData.fIn_Price = g_xd_l[n].PointLow.fVal;
 
@@ -2855,27 +3122,22 @@ BOOL ZhongShuAnalu_BeiLi()
 
 			ZSData.fkk_Max = fkk_max;
 			ZSData.fkk_Min = fkk_min;
-
-
+	
 			//
 			ZSData.nXDEnd_Index = n;
 
 			//起点，找最左边的的
 			if(g_xd_l[n].PointHigh.nIndex > g_xd_l[n].PointLow.nIndex)
 			{
-				//Out[g_xd_l[n].PointHigh.nIndex] = g_xd_l[n].fMax;
 				ZSData.nOut_Index = g_xd_l[n].PointHigh.nIndex;
 				ZSData.fOut_Price = g_xd_l[n].PointHigh.fVal;
 			}
 			else
 			{
-				//xIndex1 = xd1.PointLow.nIndex;
-				//Out[g_xd_l[n].PointLow.nIndex] = g_xd_l[n].fMax;
 				ZSData.nOut_Index = g_xd_l[n].PointLow.nIndex;
 				ZSData.fOut_Price = g_xd_l[n].PointLow.fVal;
 			}
 
-			//
 			g_vecZhongshu.push_back(ZSData);
 		}
 
@@ -2885,7 +3147,6 @@ BOOL ZhongShuAnalu_BeiLi()
 			fkk_min = min(fkk_min, g_xd_l[n].PointLow.fVal);
 		}
 	}
-
 
 	//数据收集完毕以后，开始分析
 	int nSize = g_vecZhongshu.size();
@@ -2905,9 +3166,7 @@ BOOL ZhongShuAnalu_BeiLi()
 			{
 				if(g_vecZhongshu[n].fkk_Min < ZSData.fkk_Max)
 				{
-					
 					bChongDie = TRUE;
-
 				}
 				else
 				{
@@ -2915,8 +3174,9 @@ BOOL ZhongShuAnalu_BeiLi()
 					pd.d1 = g_vecZhongshu[n];
 					pd.d2 = ZSData;
 					pd.fXieLv = (pd.d1.fOut_Price - pd.d2.fIn_Price)/(pd.d2.nIn_Index-pd.d1.nOut_Index);
+					pd.fChangDu = (pd.d1.fOut_Price - pd.d2.fIn_Price)*(pd.d1.fOut_Price - pd.d2.fIn_Price) + (pd.d2.nIn_Index-pd.d1.nOut_Index)*(pd.d2.nIn_Index-pd.d1.nOut_Index);
 
-					if(ZSData.nXDEnd_Index - ZSData.nXDStart_Index >= 8)
+					if(ZSData.nXDEnd_Index - ZSData.nXDStart_Index >= 8 && pairdata.size() < 2)
 					{
 						return FALSE;
 					}
@@ -2945,6 +3205,10 @@ BOOL ZhongShuAnalu_BeiLi()
 			int nIndex = ZSData.nOut_Index;
 			float fval = ZSData.fOut_Price;
 			int xdtmp = ZSData.nXDEnd_Index;
+	
+			float fkkkmax = ZSData.fkk_Max;
+			float fkkkmin = ZSData.fkk_Min;
+
 			ZSData = g_vecZhongshu[n];
 
 			if(bChongDie)
@@ -2952,6 +3216,8 @@ BOOL ZhongShuAnalu_BeiLi()
 				ZSData.nOut_Index = nIndex;
 				ZSData.fOut_Price = fval;
 				ZSData.nXDEnd_Index = xdtmp;//把结尾点
+				ZSData.fkk_Max = max(fkkkmax, ZSData.fkk_Max);//算上重叠
+				ZSData.fkk_Min = min(fkkkmin, ZSData.fkk_Min);//
 			}
 		}
 
@@ -2960,27 +3226,19 @@ BOOL ZhongShuAnalu_BeiLi()
 		//如果有
 		if(nCount >= 2)
 		{
-
-			//return TRUE;
-			//开始判断斜率1,粗略判断
-			//if(pairdata[0].fXieLv < pairdata[1].fXieLv)
-			//{
-			//	OutputDebugStringA("[chs] 离开 ZhongShuAnalu_BeiLi");
-			//	return TRUE;
-			//}
-
-			//如果是只有两个中枢，
-			//首先d1的前一笔必须是向下的，并且有斜率
-			//d2必须只有4笔，憋屈
 			if(nCount == 1)
 			{
 				//d1的前一笔必须是向下的, d2也是向下的
-				//if( /*   g_xd_l[pairdata[0].d1.nXDStart_Before_Index].Bi_Direction == DOWN 
-				//	&& g_xd_l[pairdata[0].d2.nXDStart_Before_Index].Bi_Direction == DOWN*/
-				//	/*&& (pairdata[0].d2.nXDEnd_Index - pairdata[0].d2.nXDStart_Index) == 3*/)
 				{
+					int nXdIndex = pairdata[0].d1.nXDStart_Before_Index;
 
-					float fVDist_d1 = g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointHigh.fVal - g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointLow.fVal;
+					if(g_xd_l[nXdIndex].Bi_Direction == DOWN)
+					{
+						return FALSE;
+					}
+
+					//从这个点起，找到前一个中枢的最高点
+					float fVDist_d1 = g_xd_l[nXdIndex].PointHigh.fVal - g_xd_l[nXdIndex].PointLow.fVal;
 					float fVDist_d2 = pairdata[0].d1.fOut_Price - pairdata[0].d2.fIn_Price;
 					if(fVDist_d1 > fVDist_d2)
 					{
@@ -2996,19 +3254,25 @@ BOOL ZhongShuAnalu_BeiLi()
 			}
 			else
 			{
+				//先判断长度
+				//if(pairdata[0].fChangDu > pairdata[1].fChangDu)
+				//{
+				//	return FALSE;
+				//}
+
+
+
 				float fVDist_d1 = pairdata[1].d1.fOut_Price - pairdata[1].d2.fIn_Price;
 				float fVDist_d2 = pairdata[0].d1.fOut_Price - pairdata[0].d2.fIn_Price;
 				if(fVDist_d1 > fVDist_d2)
 				{
 					return TRUE;
 				}
-				//if(    g_xd_l[pairdata[0].d1.nXDStart_Before_Index].Bi_Direction == DOWN 
-				//	&& g_xd_l[pairdata[0].d2.nXDStart_Before_Index].Bi_Direction == DOWN)
+
+				
+				if(  pairdata[0].fXieLv < pairdata[1].fXieLv /*&& (pairdata[0].d2.nXDEnd_Index - pairdata[0].d2.nXDStart_Index) == 3 */)
 				{
-					if(  pairdata[0].fXieLv < pairdata[1].fXieLv /*&& (pairdata[0].d2.nXDEnd_Index - pairdata[0].d2.nXDStart_Index) == 3 */)
-					{
-						return TRUE;
-					}
+					return TRUE;
 				}
 				
 			}

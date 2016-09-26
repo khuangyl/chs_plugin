@@ -90,6 +90,13 @@ float GetRealPrice(DWORD dwOrgPrice)
 
 BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,short nDataNum,BYTE nTQ,unsigned long unused) //按最近数据计算
 {
+	if(strcmp("600703", Code) == 0)
+	{
+		if(IsDebuggerPresent() == TRUE)
+		{
+			__asm int 3
+		}
+	}
 	char sztmp[128] = {0};
 	sprintf(sztmp, "[chs] Code=%s", Code);
 
@@ -101,20 +108,48 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 	BOOL nRet = FALSE;
 	
 	char szPath[MAX_PATH] = {0};
-	//根据传入的nSetCode，
-	if(nSetCode == 0)
+
+	if(DataType == PER_MIN5)
 	{
-		//深市
-		//sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sz\\fzline\\sz%s.lc5", Code);
-		sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sz\\minline\\sz%s.lc1", Code);
+		//5分钟
+		if(nSetCode == 0)
+		{
+			//深市
+			sprintf(szPath, "C:\\88-personal\\stock\\tdx\\vipdoc\\sz\\fzline\\sz%s.lc5", Code);
+		}
+		else
+		{
+			//沪市
+			sprintf(szPath, "C:\\88-personal\\stock\\tdx\\vipdoc\\sz\\fzline\\sh%s.lc5", Code);
+
+		}
 	}
-	else
+	else if(DataType == PER_MIN1)
 	{
-		//沪市
-		//sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sh\\fzline\\sh%s.lc5", Code);
-		sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sh\\minline\\sh%s.lc1", Code);
+		//1分钟
+		if(nSetCode == 0)
+		{
+			//深市
+			sprintf(szPath, "C:\\88-personal\\stock\\tdx\\vipdoc\\sz\\minline\\sz%s.lc1", Code);
+		}
+		else
+		{
+			//沪市
+			sprintf(szPath, "C:\\88-personal\\stock\\tdx\\vipdoc\\sh\\minline\\sh%s.lc1", Code);
+		}
 	}
-	
+	else if(DataType == PER_DAY)
+	{
+		//日k 暂时没有选股的
+		return FALSE;
+	}
+
+	{
+		char szTempp[MAX_PATH] = {0};
+		sprintf(szTempp, "[chs] szPath=%s", szPath);
+		OutputDebugStringA(szTempp);
+	}
+
 	
 	HANDLE hFile = CreateFile(szPath,GENERIC_READ, FILE_SHARE_READ,NULL, OPEN_EXISTING, FILE_ATTRIBUTE_ARCHIVE, NULL);
 
@@ -153,6 +188,7 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 				delete[] szBuff;
 				delete[] pHigh;
 				delete[] pLow;
+				CloseHandle(hFile);
 				return FALSE;
 			}
 			pHigh[n] = f8;
@@ -166,7 +202,21 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 			TestPlugin3( nCount, pHigh, pLow);
 			TestPlugin4( nCount, pHigh, pLow);
 			TestPlugin5( nCount, pHigh, pLow);
-			BOOL bRet = ZhongShuAnalu_BeiLi();
+
+			BOOL bRet = FALSE;
+			
+			if(DataType == PER_MIN1)
+			{
+				//1分钟
+				bRet = ZhongShuAnalu_BeiLi();
+			}
+			else if(DataType == PER_MIN5)
+			{
+				//5_分钟
+				//bRet = ZhongShuAnalu_BeiLi();
+				bRet = ZhongShuAnalu_BeiLi_5Min();
+			}
+
 			CloseHandle(hFile);
 			delete[] szBuff;
 			delete[] pHigh;
@@ -175,10 +225,11 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 		}
 		__except(1)
 		{
-			if(IsDebuggerPresent())
-			{
-				__asm int 3
-			}
+			OutputDebugStringA("[chs] 选股的时候出现异常");
+			//if(IsDebuggerPresent())
+			//{
+			//	__asm int 3
+			//}
 			delete[] szBuff;
 			delete[] pHigh;
 			delete[] pLow;

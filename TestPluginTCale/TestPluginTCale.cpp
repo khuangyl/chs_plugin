@@ -1,4 +1,4 @@
-// TestPluginTCale.cpp : Defines the entry point for the DLL application.
+// TestPluginTCale.cpp : Defines the entry point for the DLL application.xxxxxxx
 //
 
 #include "stdafx.h"

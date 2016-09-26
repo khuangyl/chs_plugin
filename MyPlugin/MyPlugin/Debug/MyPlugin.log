@@ -1,0 +1,63 @@
+﻿Build started 2016/9/24 16:01:28.
+     1>Project "C:\88-personal\stock\plugins\chs_plugin\MyPlugin\MyPlugin\MyPlugin.vcxproj" on node 2 (Rebuild target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _USRDLL /D MYPLUGIN_EXPORTS /D _VC80_UPGRADE=0x0600 /D _WINDLL /D _MBCS /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo".\Debug/" /Fd".\Debug/vc120.pdb" /Gd /TP /analyze- /errorReport:prompt MyPlugin.cpp StdAfx.cpp TCalcFuncSets.cpp
+         TCalcFuncSets.cpp
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(1206): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(2473): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(2477): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(2487): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(2491): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(2514): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(2516): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
+         StdAfx.cpp
+         MyPlugin.cpp
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(30): warning C4273: 'RegisterDataInterface' : inconsistent dll linkage
+                 c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\plugin.h(42) : see previous definition of 'RegisterDataInterface'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(36): warning C4273: 'GetCopyRightInfo' : inconsistent dll linkage
+                 c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\plugin.h(44) : see previous definition of 'GetCopyRightInfo'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(38): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\string.h(112) : see declaration of 'strcpy'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(39): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\string.h(112) : see declaration of 'strcpy'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(40): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\string.h(112) : see declaration of 'strcpy'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(41): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\string.h(112) : see declaration of 'strcpy'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(42): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\string.h(112) : see declaration of 'strcpy'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(43): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\string.h(112) : see declaration of 'strcpy'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(46): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\string.h(112) : see declaration of 'strcpy'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(50): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\string.h(112) : see declaration of 'strcpy'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(92): warning C4273: 'InputInfoThenCalc1' : inconsistent dll linkage
+                 c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\plugin.h(46) : see previous definition of 'InputInfoThenCalc1'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(101): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(118): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(123): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(133): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(138): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(149): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(217): error C3861: 'ZhongShuAnalu_BeiLi_5Min': identifier not found
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\myplugin.cpp(245): warning C4273: 'InputInfoThenCalc2' : inconsistent dll linkage
+                 c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\plugin.h(48) : see previous definition of 'InputInfoThenCalc2'
+         Generating Code...
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(781): warning C4715: 'Handle_IS_QueKou' : not all control paths return a value
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(976): warning C4715: 'Handle_FenXing' : not all control paths return a value
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(1492): warning C4715: 'Get_GuaiDian_Before_Bi' : not all control paths return a value
+     1>Done Building Project "C:\88-personal\stock\plugins\chs_plugin\MyPlugin\MyPlugin\MyPlugin.vcxproj" (Rebuild target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:01.51

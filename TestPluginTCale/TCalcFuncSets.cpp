@@ -602,6 +602,18 @@ BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
 		return FALSE;
 	}			
 
+	//这里再加一个条件，如果中间只有4根线（不包括顶底分型），不破新高或者新低都不能算
+	if(nhigh - nlow <= 8)
+	{
+		for (int n = nlow + 1; n < nhigh; n++)
+		{
+			if(ks[n].high >= ks[nhigh].high)
+			{
+				return FALSE;
+			}
+		}
+	}
+
 	if(1)
 	{
 		int nTop = nlow;
@@ -670,6 +682,8 @@ BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
 		KLine kln[300];
 		ZeroMemory((char*)kln, 300*sizeof(KLine));
 
+		//kln[nValid] = ks[nlow];
+		//nValid++;
 		for(int n = nlow; n <= nhigh; n++)
 		{
 			if(ks[n].Ext.nMegre != -1)
@@ -727,6 +741,21 @@ BOOL bIsOne_Open_Down(KLine* ks, int nlow, int nhigh)
 	{
 		return FALSE;
 	}	
+
+	//这里再加一个条件，如果中间只有4根线（不包括顶底分型），不破新高或者新低都不能算
+	if(nhigh - nlow <= 8)
+	{
+		for (int n = nlow + 1; n < nhigh; n++)
+		{
+			if(ks[n].low <= ks[nhigh].low)
+			{
+				return FALSE;
+			}
+		}
+	}
+
+
+
 
 	if(1)
 	{
@@ -798,6 +827,8 @@ BOOL bIsOne_Open_Down(KLine* ks, int nlow, int nhigh)
 		KLine kln[300];
 		ZeroMemory((char*)kln, 300*sizeof(KLine));
 
+		//kln[nValid] = ks[nlow];
+		//nValid++;
 		for(int n = nlow; n <= nhigh; n++)
 		{
 			if(ks[n].Ext.nMegre != -1)
@@ -1320,21 +1351,21 @@ void TestPlugin3(int DataLen,float* Out,float* High,float* Low, float* TIME/*flo
 		KLine curr_k=ks[i];
 		KLine last=ks[i-1];
 
-		if(curr_k.high >= 43.199 && 
-			curr_k.high < 43.201 &&
-			curr_k.low >= 43.149   &&
-			curr_k.low <  43.151)
+		if(curr_k.high >= 53.189 && 
+			curr_k.high < 53.191 &&
+			curr_k.low >= 50.999   &&
+			curr_k.low <  51.001)
 		{
 
-		if(ks[i+1].high >= 43.159 && 
-			ks[i+1].high < 43.161 &&
-			ks[i+1].low >= 43.099   &&
-			ks[i+1].low <  43.101)
+		if(ks[i+1].high >= 52.349 && 
+			ks[i+1].high < 52.351 &&
+			ks[i+1].low >= 50.899   &&
+			ks[i+1].low <  50.901)
 			{
 				if(IsDebuggerPresent() == TRUE)
-					{
+				{
 					__asm int 3
-					}
+				}
 			}
 			
 		}
