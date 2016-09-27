@@ -682,9 +682,9 @@ BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
 		KLine kln[300];
 		ZeroMemory((char*)kln, 300*sizeof(KLine));
 
-		//kln[nValid] = ks[nlow];
-		//nValid++;
-		for(int n = nlow; n <= nhigh; n++)
+		kln[nValid] = ks[nlow];
+		nValid++;
+		for(int n = nlow+1; n <= nhigh; n++)
 		{
 			if(ks[n].Ext.nMegre != -1)
 			{
@@ -827,9 +827,9 @@ BOOL bIsOne_Open_Down(KLine* ks, int nlow, int nhigh)
 		KLine kln[300];
 		ZeroMemory((char*)kln, 300*sizeof(KLine));
 
-		//kln[nValid] = ks[nlow];
-		//nValid++;
-		for(int n = nlow; n <= nhigh; n++)
+		kln[nValid] = ks[nlow];
+		nValid++;
+		for(int n = nlow+1; n <= nhigh; n++)
 		{
 			if(ks[n].Ext.nMegre != -1)
 			{
@@ -1351,16 +1351,16 @@ void TestPlugin3(int DataLen,float* Out,float* High,float* Low, float* TIME/*flo
 		KLine curr_k=ks[i];
 		KLine last=ks[i-1];
 
-		if(curr_k.high >= 53.189 && 
-			curr_k.high < 53.191 &&
-			curr_k.low >= 50.999   &&
-			curr_k.low <  51.001)
+		if(curr_k.high >= 16.199 && 
+			curr_k.high < 16.211 &&
+			curr_k.low >= 16.119   &&
+			curr_k.low <  16.121)
 		{
 
-		if(ks[i+1].high >= 52.349 && 
-			ks[i+1].high < 52.351 &&
-			ks[i+1].low >= 50.899   &&
-			ks[i+1].low <  50.901)
+		if(ks[i+1].high >= 16.189 && 
+			ks[i+1].high < 16.191 &&
+			ks[i+1].low >= 16.149   &&
+			ks[i+1].low <  16.151)
 			{
 				if(IsDebuggerPresent() == TRUE)
 				{
@@ -1411,6 +1411,7 @@ void TestPlugin3(int DataLen,float* Out,float* High,float* Low, float* TIME/*flo
 			{
 			
 				//是否包含,tmp_k是上一根最新的，如果有包含也是最新的
+				//这里要判断左右包含，如果是左包含才算，有包含不算包含
 				if (isIncluded(tmp_k, curr_k)!=0)
 				{
 					

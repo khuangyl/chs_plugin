@@ -1,4 +1,4 @@
-﻿Build started 2016/9/26 10:59:17.
+﻿Build started 2016/9/27 15:37:38.
      1>Project "C:\88-personal\stock\plugins\chs_plugin\TestPluginTCale\TestPluginTCale.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _USRDLL /D TESTPLUGINTCALE_EXPORTS /D _VC80_UPGRADE=0x0600 /D _WINDLL /D _MBCS /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yc"stdafx.h" /Fp".\Debug/TestPluginTCale.pch" /Fo".\Debug/" /Fd".\Debug/vc120.pdb" /FR".\Debug\\" /Gd /TP /analyze- /errorReport:prompt StdAfx.cpp
@@ -6,44 +6,44 @@
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _USRDLL /D TESTPLUGINTCALE_EXPORTS /D _VC80_UPGRADE=0x0600 /D _WINDLL /D _MBCS /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp".\Debug/TestPluginTCale.pch" /Fo".\Debug/" /Fd".\Debug/vc120.pdb" /FR".\Debug\\" /Gd /TP /analyze- /errorReport:prompt TCalcFuncSets.cpp TestPluginTCale.cpp
          TestPluginTCale.cpp
          TCalcFuncSets.cpp
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(1519): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(1520): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(2785): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(2789): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(2799): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(2803): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(2826): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(2786): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(2790): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(2800): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(2804): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(2827): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(2828): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(2829): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3122): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3123): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3132): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3133): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3156): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3157): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3164): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3165): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3188): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3189): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3197): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3198): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3210): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3211): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3219): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3220): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3243): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3244): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3252): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3253): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3265): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3266): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3274): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(3275): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  c:\program files (x86)\microsoft visual studio 12.0\vc\include\stdio.h(356) : see declaration of 'sprintf'
          Generating Code...
      1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(1087): warning C4715: 'Handle_IS_QueKou' : not all control paths return a value
-     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(1805): warning C4715: 'Get_GuaiDian_Before_Bi' : not all control paths return a value
      1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(1282): warning C4715: 'Handle_FenXing' : not all control paths return a value
+     1>c:\88-personal\stock\plugins\chs_plugin\testplugintcale\tcalcfuncsets.cpp(1806): warning C4715: 'Get_GuaiDian_Before_Bi' : not all control paths return a value
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(1186,5): warning MSB8012: TargetPath(C:\88-personal\stock\plugins\chs_plugin\TestPluginTCale\.\Debug\TestPluginTCale.dll) does not match the Linker's OutputFile property value (C:\88-personal\stock\tdx\T0002\dlls\TestPluginTCale.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\88-personal\stock\tdx\T0002\dlls\TestPluginTCale.dll" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:".\Debug/TestPluginTCale.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\Debug/TestPluginTCale.lib" /MACHINE:X86 /SAFESEH /DLL .\Debug/StdAfx.obj
@@ -58,4 +58,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:03.83
+Time Elapsed 00:00:03.57

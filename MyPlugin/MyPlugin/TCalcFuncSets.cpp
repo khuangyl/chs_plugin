@@ -375,6 +375,8 @@ BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
 	{
 		//这里属于放宽条件，在两点间只要是5根k线自由排列都行
 		int nValid = 0;
+		//KLine kln[300];
+		//ZeroMemory((char*)kln, 300*sizeof(KLine));
 		static KLine *kln = NULL;
 		if(kln == NULL)
 		{
@@ -383,9 +385,9 @@ BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
 
 		ZeroMemory((char*)kln, 2000*sizeof(KLine));
 
-		//kln[nValid] = ks[nlow];
-		//nValid++;
-		for(int n = nlow; n <= nhigh; n++)
+		kln[nValid] = ks[nlow];
+		nValid++;
+		for(int n = nlow+1; n <= nhigh; n++)
 		{
 			if(ks[n].Ext.nMegre != -1)
 			{
@@ -537,10 +539,9 @@ BOOL bIsOne_Open_Down(KLine* ks, int nlow, int nhigh)
 
 		ZeroMemory((char*)kln, 2000*sizeof(KLine));
 
-
-		//kln[nValid] = ks[nlow];
-		//nValid++;
-		for(int n = nlow; n <= nhigh; n++)
+		kln[nValid] = ks[nlow];
+		nValid++;
+		for(int n = nlow+1; n <= nhigh; n++)
 		{
 			if(ks[n].Ext.nMegre != -1)
 			{
@@ -2945,6 +2946,10 @@ BOOL ZhongShuAnalu_BeiLi_5Min()
 			{
 				if(g_vecZhongshu[n].fkk_Min < ZSData.fkk_Max)
 				{
+					if(nCount == 0)
+					{
+						return FALSE;
+					}
 					bChongDie = TRUE;
 				}
 				else
@@ -2975,6 +2980,10 @@ BOOL ZhongShuAnalu_BeiLi_5Min()
 				}
 				else
 				{
+					if(nCount == 0)
+					{
+						return FALSE;
+					}
 					bChongDie = TRUE;
 				}
 
@@ -3166,6 +3175,10 @@ BOOL ZhongShuAnalu_BeiLi()
 			{
 				if(g_vecZhongshu[n].fkk_Min < ZSData.fkk_Max)
 				{
+					if(nCount == 0)
+					{
+						return FALSE;
+					}
 					bChongDie = TRUE;
 				}
 				else
@@ -3197,6 +3210,10 @@ BOOL ZhongShuAnalu_BeiLi()
 				}
 				else
 				{
+					if(nCount == 0)
+					{
+						return FALSE;
+					}
 					bChongDie = TRUE;
 				}
 
@@ -3254,7 +3271,7 @@ BOOL ZhongShuAnalu_BeiLi()
 			}
 			else
 			{
-				//先判断长度
+				////先判断长度
 				//if(pairdata[0].fChangDu > pairdata[1].fChangDu)
 				//{
 				//	return FALSE;
