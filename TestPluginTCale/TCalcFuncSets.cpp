@@ -607,7 +607,7 @@ BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
 	{
 		for (int n = nlow + 1; n < nhigh; n++)
 		{
-			if(ks[n].high >= ks[nhigh].high)
+			if(ks[n].high > ks[nhigh].high)
 			{
 				return FALSE;
 			}
@@ -686,7 +686,17 @@ BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
 		nValid++;
 		for(int n = nlow+1; n <= nhigh; n++)
 		{
-			if(ks[n].Ext.nMegre != -1)
+			//if(ks[n].Ext.nMegre != -1)
+			//if(ks[n].Ext.nMegre == -1 && isIncluded(ks[n], ks[n+1]) == -1)
+			//{
+			//	;
+			//}
+			//else
+			if(ks[n].high == ks[n+1].high && ks[n].low == ks[n+1].low)
+			{
+				;
+			}
+			else
 			{
 				if(ks[n].Ext.nDirector == UP)
 				{
@@ -696,7 +706,7 @@ BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
 			}
 		}
 
-		if(nValid < 3)
+		if(nValid < 5)
 		{
 			return FALSE;
 		}
@@ -747,7 +757,7 @@ BOOL bIsOne_Open_Down(KLine* ks, int nlow, int nhigh)
 	{
 		for (int n = nlow + 1; n < nhigh; n++)
 		{
-			if(ks[n].low <= ks[nhigh].low)
+			if(ks[n].low < ks[nhigh].low)
 			{
 				return FALSE;
 			}
@@ -831,7 +841,17 @@ BOOL bIsOne_Open_Down(KLine* ks, int nlow, int nhigh)
 		nValid++;
 		for(int n = nlow+1; n <= nhigh; n++)
 		{
-			if(ks[n].Ext.nMegre != -1)
+			//if(ks[n].Ext.nMegre != -1)
+			//if(ks[n].Ext.nMegre == -1 && isIncluded(ks[n], ks[n+1]) == -1)
+			//{
+			//	;
+			//}
+			//else
+			if(ks[n].high == ks[n+1].high && ks[n].low == ks[n+1].low)
+			{
+				;
+			}
+			else
 			{
 				if(ks[n].Ext.nDirector == DOWN)
 				{
@@ -841,7 +861,7 @@ BOOL bIsOne_Open_Down(KLine* ks, int nlow, int nhigh)
 			}
 		}
 
-		if(nValid < 3)
+		if(nValid < 5)
 		{
 			return FALSE;
 		}
@@ -1351,16 +1371,16 @@ void TestPlugin3(int DataLen,float* Out,float* High,float* Low, float* TIME/*flo
 		KLine curr_k=ks[i];
 		KLine last=ks[i-1];
 
-		if(curr_k.high >= 16.199 && 
-			curr_k.high < 16.211 &&
-			curr_k.low >= 16.119   &&
-			curr_k.low <  16.121)
+		if(curr_k.high >= 16.719 && 
+			curr_k.high < 16.721 &&
+			curr_k.low >= 16.689   &&
+			curr_k.low <  16.691)
 		{
 
-		if(ks[i+1].high >= 16.189 && 
-			ks[i+1].high < 16.191 &&
-			ks[i+1].low >= 16.149   &&
-			ks[i+1].low <  16.151)
+		if(ks[i+1].high >= 16.709 && 
+			ks[i+1].high < 16.711 &&
+			ks[i+1].low >= 16.669   &&
+			ks[i+1].low <  16.671)
 			{
 				if(IsDebuggerPresent() == TRUE)
 				{
@@ -1805,12 +1825,88 @@ int Get_GuaiDian_Before_Bi(Bi_Line *Bl, int k, KDirection nDirect, int nStart)
 
 }
 
+int Te_Zheng_XuLie_Meger_For_FengXing(Bi_Line *Bl, int nStartk, int nLen, Bi_Line *BlxOut)
+{
+	//BlxOut = new Bi_Line[nLen];
+	memcpy(BlxOut, Bl, sizeof(Bi_Line)*nLen);
+
+	//向上的线段，
+	if(BlxOut[nStartk].Bi_Direction == UP)
+	{
+		//首先特征序列进行包含，先找到
+		for (int k = 0; nStartk+k*2+3 < nLen; k++)
+		{
+			int nRet = isIncluded_XianDuan(BlxOut[nStartk+k*2+1],  BlxOut[nStartk+k*2+3]);
+			if( nRet)//只有左包含才处理, 找分型，左右包含都要处理
+			{
+				//不管左右包含都是取上
+				Bi_Line temp =  kMerge_XianDuan(BlxOut[nStartk+k*2+1], BlxOut[nStartk+k*2+3], UP);
+				BlxOut[nStartk+k*2+1].nMeger = -1;
+				BlxOut[nStartk+k*2+3].nMeger = 1;
+
+
+				//if(BlxOut[nStartk+k*2+3].PointHigh.fVal != temp.PointHigh.fVal)
+				{
+					//说明比前一个高点低
+					BlxOut[nStartk+k*2+3].PointHigh.MegerIndex = BlxOut[nStartk+k*2+3].PointHigh.nIndex;//保存原来的点，
+					BlxOut[nStartk+k*2+3].PointHigh.nIndex = BlxOut[nStartk+k*2+1].PointHigh.nIndex;//把新店赋值给它				 
+				}
+
+				BlxOut[nStartk+k*2+3].PointHigh.fVal = temp.PointHigh.fVal;
+				BlxOut[nStartk+k*2+3].PointLow.fVal = temp.PointLow.fVal;
+			}
+			//else if(nRet == 1)
+			//{
+			//	//右包含
+			//	//BlxOut[nStartk+k*2+1].nMegerx2 = 1;
+
+			//	//找分型的时候右包含也要处理
+
+
+			//}
+
+		}
+	}
+	else
+	{
+		//首先特征序列进行包含，先找到
+		for (int k = 0; nStartk+k*2+3 < nLen; k++)
+		{
+			int nRet = isIncluded_XianDuan(BlxOut[nStartk+k*2+1],  BlxOut[nStartk+k*2+3]);
+			if(nRet)
+			{
+				//不管左右包含都是取上
+				Bi_Line temp =  kMerge_XianDuan(BlxOut[nStartk+k*2+1], BlxOut[nStartk+k*2+3], DOWN);
+				BlxOut[nStartk+k*2+1].nMeger = -1;
+				BlxOut[nStartk+k*2+3].nMeger = 1;
+
+				//if(BlxOut[nStartk+k*2+3].PointLow.fVal != temp.PointLow.fVal)
+				{
+					//说明比前一个高点低
+					BlxOut[nStartk+k*2+3].PointLow.MegerIndex = BlxOut[nStartk+k*2+3].PointLow.nIndex;//保存原来的点，
+					BlxOut[nStartk+k*2+3].PointLow.nIndex = BlxOut[nStartk+k*2+1].PointLow.nIndex;//把新店赋值给它
+				}
+
+				BlxOut[nStartk+k*2+3].PointHigh.fVal = temp.PointHigh.fVal;
+				BlxOut[nStartk+k*2+3].PointLow.fVal = temp.PointLow.fVal;
+			}
+			//else if(nRet == 1)
+			//{
+			//	//右包含
+			//	BlxOut[nStartk+k*2+1].nMegerx2 = 1;
+			//}
+
+		}
+	}
+
+	return 0;
+}
 
 //从该点起找分型,返回分型的位置
 int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 {
 	Bi_Line *BlxOut = new Bi_Line[nLen];;
-	Te_Zheng_XuLie_Meger(Bl, nStartk, nLen, BlxOut);
+	Te_Zheng_XuLie_Meger_For_FengXing(Bl, nStartk, nLen, BlxOut);
 
 	KDirection nDirectxx = NODIRECTION;
 
@@ -1950,7 +2046,7 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 					//DrawGuaiDian_Before_bi(BlxOut,  nStartk, np);//画拐点前的一笔
 					if(np)
 					{
-						if(BlxOut[np+2].PointLow.fVal < BlxOut[np].PointHigh.fVal)
+						if(BlxOut[np+2].PointLow.fVal <= BlxOut[np].PointHigh.fVal)
 						{
 							int nRet = 0;
 
@@ -2145,11 +2241,27 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 		Bi_Line Temp = BlxOut[nStartk+1];
 		for(int k = 0; nStartk+2*k+3 < nLen; k++)
 		{
+			
 			//if(/*BlxOut[nStartk+2*k+3].nMeger != -1 &&*/ BlxOut[nStartk+2*k+3].nMegerx2 == 0)
 			{
 				//先找到一个特征序列的一个拐点，让判断是是不是满足条件1或者2
 				if(BlxOut[nStartk+2*k+3].PointLow.fVal > Temp.PointLow.fVal)
 				{
+
+					if(1)
+					{
+						if(IsDebuggerPresent() == TRUE)
+						{
+							if(		BlxOut[nStartk+2*k+3].PointLow.fVal > 15.169 
+								&&	BlxOut[nStartk+2*k+3].PointLow.fVal < 15.171
+								&&  BlxOut[nStartk+2*k+3].PointHigh.fVal > 15.269
+								&&	BlxOut[nStartk+2*k+3].PointHigh.fVal < 15.271)
+							{
+								__asm int 3
+							}
+						}
+					}
+
 					bFlagGuaiDian = TRUE;
 					//DrawGuaiDian(BlxOut,  nStartk,  k);//画拐点的笔
 
@@ -2163,7 +2275,7 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 					//DrawGuaiDian_Before_bi(BlxOut,  nStartk, np);//画拐点前的一笔
 					if(np)
 					{
-						if(BlxOut[np+2].PointHigh.fVal > BlxOut[np].PointLow.fVal)//是否满足第一种情况
+						if(BlxOut[np+2].PointHigh.fVal >= BlxOut[np].PointLow.fVal)//是否满足第一种情况
 						{
 							int nRet = 0;
 

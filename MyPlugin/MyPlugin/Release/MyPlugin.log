@@ -1,4 +1,4 @@
-﻿Build started 2016/9/27 15:38:00.
+﻿Build started 2016/10/1 14:32:14.
      1>Project "C:\88-personal\stock\plugins\chs_plugin\MyPlugin\MyPlugin\MyPlugin.vcxproj" on node 2 (Rebuild target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Ob1 /Oy- /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D MYPLUGIN_EXPORTS /D _VC80_UPGRADE=0x0600 /D _WINDLL /D _MBCS /GF /Gm- /EHsc /MT /Zp1 /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo".\Release/" /Fd".\Release/vc120.pdb" /Gd /TP /analyze- /errorReport:prompt MyPlugin.cpp StdAfx.cpp TCalcFuncSets.cpp
@@ -41,20 +41,20 @@
                  c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\plugin.h(48) : see previous definition of 'InputInfoThenCalc2'
          StdAfx.cpp
          TCalcFuncSets.cpp
-     1>TCalcFuncSets.cpp(1228): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>TCalcFuncSets.cpp(1249): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h(356) : see declaration of 'sprintf'
-     1>TCalcFuncSets.cpp(2495): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>TCalcFuncSets.cpp(2499): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>TCalcFuncSets.cpp(2509): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>TCalcFuncSets.cpp(2513): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>TCalcFuncSets.cpp(2536): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>TCalcFuncSets.cpp(2592): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>TCalcFuncSets.cpp(2596): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>TCalcFuncSets.cpp(2606): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>TCalcFuncSets.cpp(2610): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>TCalcFuncSets.cpp(2633): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h(356) : see declaration of 'sprintf'
-     1>TCalcFuncSets.cpp(2538): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>TCalcFuncSets.cpp(2635): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h(356) : see declaration of 'sprintf'
          Generating Code...
-     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(1514): warning C4715: 'Get_GuaiDian_Before_Bi' : not all control paths return a value
-     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(803): warning C4715: 'Handle_IS_QueKou' : not all control paths return a value
-     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(998): warning C4715: 'Handle_FenXing' : not all control paths return a value
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(1535): warning C4715: 'Get_GuaiDian_Before_Bi' : not all control paths return a value
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(824): warning C4715: 'Handle_IS_QueKou' : not all control paths return a value
+     1>c:\88-personal\stock\plugins\chs_plugin\myplugin\myplugin\tcalcfuncsets.cpp(1019): warning C4715: 'Handle_FenXing' : not all control paths return a value
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:".\Release/MyPlugin.dll" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:".\Release/MyPlugin.pdb" /TLBID:1 /DYNAMICBASE:NO /IMPLIB:".\Release/MyPlugin.lib" /MACHINE:X86 /SAFESEH /DLL .\Release/MyPlugin.obj
          .\Release/StdAfx.obj
@@ -65,4 +65,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.33
+Time Elapsed 00:00:03.35
