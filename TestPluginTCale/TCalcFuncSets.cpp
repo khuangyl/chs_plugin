@@ -692,7 +692,8 @@ BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
 			//	;
 			//}
 			//else
-			if(ks[n].high == ks[n+1].high && ks[n].low == ks[n+1].low)
+			//if(ks[n].high == ks[n+1].high && ks[n].low == ks[n+1].low)
+			if(ks[n].Ext.nMegre == -1 || (ks[n].high == ks[n+1].high && ks[n].low == ks[n+1].low))
 			{
 				;
 			}
@@ -847,7 +848,8 @@ BOOL bIsOne_Open_Down(KLine* ks, int nlow, int nhigh)
 			//	;
 			//}
 			//else
-			if(ks[n].high == ks[n+1].high && ks[n].low == ks[n+1].low)
+			//if(ks[n].high == ks[n+1].high && ks[n].low == ks[n+1].low)
+			if(ks[n].Ext.nMegre == -1 || (ks[n].high == ks[n+1].high && ks[n].low == ks[n+1].low))
 			{
 				;
 			}
@@ -1935,8 +1937,24 @@ int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 				{
 					if(Direct == UP)
 					{
-						delete BlxOut;
-						return nStartk + 2*k-1;
+						//delete BlxOut;
+						//return nStartk + 2*k-1;
+						if(BlxOut[nStartk + 2*k-1].nMeger != -1)
+						{
+							delete BlxOut;
+							return nStartk + 2*k-1;
+						}
+						else
+						{
+							for(int m = k ;m > 1; m--)
+							{
+								if(BlxOut[nStartk + 2*m-1].nMeger != -1)
+								{
+									delete BlxOut;
+									return nStartk + 2*m+1;
+								}
+							}
+						}
 					}
 
 				}
@@ -1981,8 +1999,24 @@ int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 					{
 						if(Direct == DOWN)
 						{
-							delete BlxOut;
-							return nStartk + 2*k-1;
+							//delete BlxOut;
+							//return nStartk + 2*k-1;
+							if(BlxOut[nStartk + 2*k-1].nMeger != -1)
+							{
+								delete BlxOut;
+								return nStartk + 2*k-1;
+							}
+							else
+							{
+								for(int m = k ;m > 1; m--)
+								{
+									if(BlxOut[nStartk + 2*m-1].nMeger != -1)
+									{
+										delete BlxOut;
+										return nStartk + 2*m+1;
+									}
+								}
+							}
 						}
 					}
 

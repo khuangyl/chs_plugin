@@ -394,7 +394,7 @@ BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
 			//	;
 			//}
 			//else
-			if(ks[n].high == ks[n+1].high && ks[n].low == ks[n+1].low)
+			if(ks[n].Ext.nMegre == -1 || (ks[n].high == ks[n+1].high && ks[n].low == ks[n+1].low))
 			{
 				;
 			}
@@ -560,7 +560,8 @@ BOOL bIsOne_Open_Down(KLine* ks, int nlow, int nhigh)
 			//	;
 			//}
 			//else
-			if(ks[n].high == ks[n+1].high && ks[n].low == ks[n+1].low)
+			//if(ks[n].high == ks[n+1].high && ks[n].low == ks[n+1].low)
+			if(ks[n].Ext.nMegre == -1 || (ks[n].high == ks[n+1].high && ks[n].low == ks[n+1].low))
 			{
 				;
 			}
@@ -1644,8 +1645,24 @@ int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 				{
 					if(Direct == UP)
 					{
-						delete BlxOut;
-						return nStartk + 2*k-1;
+						//delete BlxOut;
+						//return nStartk + 2*k-1;
+						if(BlxOut[nStartk + 2*k-1].nMeger != -1)
+						{
+							delete BlxOut;
+							return nStartk + 2*k-1;
+						}
+						else
+						{
+							for(int m = k ;m > 1; m--)
+							{
+								if(BlxOut[nStartk + 2*m-1].nMeger != -1)
+								{
+									delete BlxOut;
+									return nStartk + 2*m+1;
+								}
+							}
+						}
 					}
 
 				}
@@ -1690,8 +1707,24 @@ int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 					{
 						if(Direct == DOWN)
 						{
-							delete BlxOut;
-							return nStartk + 2*k-1;
+							//delete BlxOut;
+							//return nStartk + 2*k-1;
+							if(BlxOut[nStartk + 2*k-1].nMeger != -1)
+							{
+								delete BlxOut;
+								return nStartk + 2*k-1;
+							}
+							else
+							{
+								for(int m = k ;m > 1; m--)
+								{
+									if(BlxOut[nStartk + 2*m-1].nMeger != -1)
+									{
+										delete BlxOut;
+										return nStartk + 2*m+1;
+									}
+								}
+							}
 						}
 					}
 
@@ -2946,6 +2979,8 @@ typedef struct _Pair_Data
 
 	float fXieLv;
 	float fChangDu;
+	int   nTimeIndexCount;
+	int   fPriceDistance;
 
 }Pair_Data;
 
@@ -3055,6 +3090,8 @@ BOOL ZhongShuAnalu_BeiLi_5Min()
 					pd.d1 = g_vecZhongshu[n];
 					pd.d2 = ZSData;
 					pd.fXieLv = (pd.d1.fOut_Price - pd.d2.fIn_Price)/(pd.d2.nIn_Index-pd.d1.nOut_Index);
+					pd.nTimeIndexCount = pd.d2.nIn_Index-pd.d1.nOut_Index;
+					pd.fPriceDistance = pd.d1.fOut_Price - pd.d2.fIn_Price;
 
 					if(ZSData.nXDEnd_Index - ZSData.nXDStart_Index >= 8 && pairdata.size() < 2)
 					{
@@ -3373,15 +3410,25 @@ BOOL ZhongShuAnalu_BeiLi()
 				//{
 				//	return FALSE;
 				//}
+				//去掉几个明显的
+
 
 
 
 				float fVDist_d1 = pairdata[1].d1.fOut_Price - pairdata[1].d2.fIn_Price;
 				float fVDist_d2 = pairdata[0].d1.fOut_Price - pairdata[0].d2.fIn_Price;
+
+				//if(pairdata[1].fPriceDistance < pairdata[0].fPriceDistance && fVDist_d1 < fVDist_d2)
+				//{
+				//	return FALSE;
+				//}
+
+
 				if(fVDist_d1 > fVDist_d2)
 				{
 					return TRUE;
 				}
+
 
 				
 				if(  pairdata[0].fXieLv < pairdata[1].fXieLv /*&& (pairdata[0].d2.nXDEnd_Index - pairdata[0].d2.nXDStart_Index) == 3 */)
