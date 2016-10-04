@@ -1926,7 +1926,7 @@ int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 		for (int k = 1; nStartk + 2*k+1 < nLen; k++)
 		{
 			//找到特征序列的分型
-			if(BlxOut[nStartk + 2*k+1].nMeger != -1)
+			//if(BlxOut[nStartk + 2*k+1].nMeger != -1)
 			{
 				KDirection Direct = isUp_XianDuan(Temp, BlxOut[nStartk + 2*k+1]);
 				if(nDirectxx == NODIRECTION)
@@ -1983,7 +1983,7 @@ int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 			for (int k = 1; nStartk + 2*k+1 < nLen; k++)
 			{
 				//找到特征序列的分型
-				if(BlxOut[nStartk + 2*k+1].nMeger != -1)
+				//if(BlxOut[nStartk + 2*k+1].nMeger != -1)
 				{
 					KDirection Direct = isUp_XianDuan(Temp, BlxOut[nStartk + 2*k+1]);
 					if(nDirectxx == NODIRECTION)
