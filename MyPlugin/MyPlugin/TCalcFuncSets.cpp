@@ -3667,7 +3667,7 @@ BOOL ZhongShuAnaly_YuCe()
 				if(g_xd_l[nIndexx+1].Bi_Direction == DOWN)
 				{
 					//pairdata[0].fPriceDistance;上一个的价钱
-					pairdata[0].fChangDu
+					//pairdata[0].fChangDu
 				}
 			}	
 
@@ -3702,7 +3702,7 @@ BOOL ZhongShuAnaly_YuCe()
 			{
 
 				float fVDist_d1 = pairdata[1].d1.fOut_Price - pairdata[1].d2.fIn_Price;
-				float fVDist_d2 = pairdata[0].d1.fOut_Price - pairdata[0].d2.fIn_Price
+				float fVDist_d2 = pairdata[0].d1.fOut_Price - pairdata[0].d2.fIn_Price;
 				if(fVDist_d1 > fVDist_d2)
 				{
 					return TRUE;
