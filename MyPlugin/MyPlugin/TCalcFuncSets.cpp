@@ -10,7 +10,7 @@ using namespace std;
 
 #define TMPFILE "D:\\tdx_tmp.txt"
 #define LOGMAIN "D:\\log_main.txt"
-    
+
 
 
 
@@ -1974,6 +1974,29 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 				}
 			}
 		}
+		else
+		{
+			int k = 1;
+			float Vfloat = Bl[nStartk].PointHigh.fVal;
+			int n = 0;
+			while(nStartk+k < nLen)
+			{
+				if( Vfloat <  Bl[nStartk+k].PointHigh.fVal && Bl[nStartk+k].Bi_Direction == UP)
+				{
+					n = k;
+					Vfloat = Bl[nStartk+k].PointHigh.fVal;
+				}
+				k++;
+			}
+			k--;
+			if(Vfloat >  Bl[nStartk].PointHigh.fVal && n >=2 )
+			{
+				{
+					//Draw_QueDing_Xianduan_First_UP(Bl, nStartk, nStartk+n);//画第一情况的笔
+					Bl[nStartk+n].XianDuan_nprop = 1;
+				}
+			}
+		}
 	}
 
 
@@ -2163,6 +2186,29 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 
 		// 没有找到拐点，也就是一条直线，
 		if(bFlagGuaiDian  == FALSE)
+		{
+			int k = 1;
+			float Vfloat = Bl[nStartk].PointLow.fVal;
+			int n = 0;
+			while(nStartk+k < nLen)
+			{
+				if( Vfloat >  Bl[nStartk+k].PointLow.fVal && Bl[nStartk+k].Bi_Direction == DOWN)
+				{
+					n = k;
+					Vfloat = Bl[nStartk+k].PointLow.fVal;
+				}
+				k++;
+			}
+			k--;
+			if(Vfloat <  Bl[nStartk].PointLow.fVal && n >=2 )
+			{
+				{
+					//Draw_QueDing_Xianduan_First_DOWN(Bl, nStartk, nStartk+n);//画第一情况的笔
+					Bl[nStartk+n].XianDuan_nprop = -1;
+				}
+			}
+		}
+		else
 		{
 			int k = 1;
 			float Vfloat = Bl[nStartk].PointLow.fVal;
@@ -3441,6 +3487,239 @@ BOOL ZhongShuAnalu_BeiLi()
 		}
 	}
 	
+	OutputDebugStringA("[chs] 离开 ZhongShuAnalu_BeiLi");
+	return FALSE;
+}
+
+
+
+
+//对中枢进行分析，预测后面的走势
+BOOL ZhongShuAnaly_YuCe()
+{
+
+	OutputDebugStringA("[chs] ZhongShuAnaly_YuCe");
+	std::vector<ZhongShuData> g_vecZhongshu;
+
+	BOOL bFlag = FALSE;
+
+	ZhongShuData ZSData;
+
+	float fkk_max;
+	float fkk_min;
+
+	for (int n = 0; n < nSize_xd_l; n++)
+	{
+		if(g_xd_l[n].XianDuan_nprop == 1)
+		{
+			bFlag = TRUE;
+			ZSData.fMax = g_xd_l[n].fMax;
+			ZSData.fMin = g_xd_l[n].fMin;
+
+			ZSData.nXDStart_Index = n;
+			ZSData.nXDStart_Before_Index = n-1;
+
+			fkk_max = g_xd_l[n].PointHigh.fVal;
+			fkk_min = g_xd_l[n].PointLow.fVal;
+			//起点，找最左边的的
+			if(g_xd_l[n].PointHigh.nIndex < g_xd_l[n].PointLow.nIndex)
+			{
+				ZSData.nIn_Index = g_xd_l[n].PointHigh.nIndex;
+				ZSData.fIn_Price = g_xd_l[n].PointHigh.fVal;
+
+			}
+			else
+			{
+				ZSData.nIn_Index = g_xd_l[n].PointLow.nIndex;
+				ZSData.fIn_Price = g_xd_l[n].PointLow.fVal;
+
+			}
+		}
+
+		if(g_xd_l[n].XianDuan_nprop == 2)
+		{
+			bFlag = FALSE;
+			fkk_max = max(fkk_max, g_xd_l[n].PointHigh.fVal);
+			fkk_min = min(fkk_min, g_xd_l[n].PointLow.fVal);
+
+			ZSData.fkk_Max = fkk_max;
+			ZSData.fkk_Min = fkk_min;
+
+			//
+			ZSData.nXDEnd_Index = n;
+
+			//起点，找最左边的的
+			if(g_xd_l[n].PointHigh.nIndex > g_xd_l[n].PointLow.nIndex)
+			{
+				ZSData.nOut_Index = g_xd_l[n].PointHigh.nIndex;
+				ZSData.fOut_Price = g_xd_l[n].PointHigh.fVal;
+			}
+			else
+			{
+				ZSData.nOut_Index = g_xd_l[n].PointLow.nIndex;
+				ZSData.fOut_Price = g_xd_l[n].PointLow.fVal;
+			}
+
+			g_vecZhongshu.push_back(ZSData);
+		}
+
+		if(bFlag == TRUE)
+		{
+			fkk_max = max(fkk_max, g_xd_l[n].PointHigh.fVal);
+			fkk_min = min(fkk_min, g_xd_l[n].PointLow.fVal);
+		}
+	}
+
+	//数据收集完毕以后，开始分析
+	int nSize = g_vecZhongshu.size();
+
+	if(nSize > 2)
+	{
+		std::vector<Pair_Data>  pairdata;
+		//找到上一个中枢，如果不是向上的，并且没有中枢重叠的话就直接退出
+
+		ZSData = g_vecZhongshu[nSize-1];
+
+		int nCount = 0; //计数，有多少重是不重叠
+		for (int n = nSize-2; n >= 0; n--)
+		{
+			BOOL bChongDie = FALSE;
+			if(g_vecZhongshu[n].fMin > ZSData.fMax)
+			{
+				if(g_vecZhongshu[n].fkk_Min < ZSData.fkk_Max)
+				{
+					if(nCount == 0)
+					{
+						return FALSE;
+					}
+					bChongDie = TRUE;
+				}
+				else
+				{
+					Pair_Data pd;
+					pd.d1 = g_vecZhongshu[n];
+					pd.d2 = ZSData;
+					pd.fXieLv = (pd.d1.fOut_Price - pd.d2.fIn_Price)/(pd.d2.nIn_Index-pd.d1.nOut_Index);
+					pd.fChangDu = (pd.d1.fOut_Price - pd.d2.fIn_Price)*(pd.d1.fOut_Price - pd.d2.fIn_Price)*10000 + (pd.d2.nIn_Index-pd.d1.nOut_Index)*(pd.d2.nIn_Index-pd.d1.nOut_Index);
+
+					if(ZSData.nXDEnd_Index - ZSData.nXDStart_Index >= 8 && pairdata.size() < 2)
+					{
+						return FALSE;
+					}
+					pairdata.push_back(pd);
+
+					nCount++;
+				}
+
+
+			}
+			else
+			{
+				//break;
+				//判断一下是否是已经有中枢交集，如果有就忽略,
+				if ( ZSData.fMin > g_vecZhongshu[n].fMax &&   ZSData.fkk_Min >  g_vecZhongshu[n].fkk_Max )
+				{
+					break;
+				}
+				else
+				{
+					if(nCount == 0)
+					{
+						return FALSE;
+					}
+					bChongDie = TRUE;
+				}
+
+			}
+
+			int nIndex = ZSData.nOut_Index;
+			float fval = ZSData.fOut_Price;
+			int xdtmp = ZSData.nXDEnd_Index;
+
+			float fkkkmax = ZSData.fkk_Max;
+			float fkkkmin = ZSData.fkk_Min;
+
+			ZSData = g_vecZhongshu[n];
+
+			if(bChongDie)
+			{
+				ZSData.nOut_Index = nIndex;
+				ZSData.fOut_Price = fval;
+				ZSData.nXDEnd_Index = xdtmp;//把结尾点
+				ZSData.fkk_Max = max(fkkkmax, ZSData.fkk_Max);//算上重叠
+				ZSData.fkk_Min = min(fkkkmin, ZSData.fkk_Min);//
+			}
+		}
+
+		delete[] g_xd_l;
+
+		//如果有
+		if(nCount )
+		{
+
+			//预测的时候要找到最后的中枢，如果是最后一个中枢后有3个线段，而且第一个线段是向下，并且第一个线段的长度和时间比第一个小
+			//预测的条件要苛刻点的好
+			int nIndexx = pairdata[0].d2.nXDEnd_Index;
+			//for (int n = 0; n < nSize_xd_l; n++)
+			//if(g_xd_l[n].XianDuan_nprop == 1)
+			if(nIndexx < nSize_xd_l && (nSize_xd_l - nIndexx) == 4)
+			{
+				if(g_xd_l[nIndexx+1].Bi_Direction == DOWN)
+				{
+					//pairdata[0].fPriceDistance;上一个的价钱
+					pairdata[0].fChangDu
+				}
+			}	
+
+			return FALSE;
+			if(nCount == 1)
+			{
+				//d1的前一笔必须是向下的, d2也是向下的
+				{
+					int nXdIndex = pairdata[0].d1.nXDStart_Before_Index;
+
+					if(g_xd_l[nXdIndex].Bi_Direction == DOWN)
+					{
+						return FALSE;
+					}
+
+					//从这个点起，找到前一个中枢的最高点
+					float fVDist_d1 = g_xd_l[nXdIndex].PointHigh.fVal - g_xd_l[nXdIndex].PointLow.fVal;
+					float fVDist_d2 = pairdata[0].d1.fOut_Price - pairdata[0].d2.fIn_Price;
+					if(fVDist_d1 > fVDist_d2)
+					{
+						return TRUE;
+					}
+
+					float fxlv = (g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointHigh.fVal - g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointLow.fVal)/(float)(g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointHigh.nIndex - g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointLow.nIndex);
+					if(fxlv > pairdata[0].fXieLv)
+					{
+						return TRUE;
+					}
+				}
+			}
+			else
+			{
+
+				float fVDist_d1 = pairdata[1].d1.fOut_Price - pairdata[1].d2.fIn_Price;
+				float fVDist_d2 = pairdata[0].d1.fOut_Price - pairdata[0].d2.fIn_Price
+				if(fVDist_d1 > fVDist_d2)
+				{
+					return TRUE;
+				}
+
+
+
+				if(  pairdata[0].fXieLv < pairdata[1].fXieLv /*&& (pairdata[0].d2.nXDEnd_Index - pairdata[0].d2.nXDStart_Index) == 3 */)
+				{
+					return TRUE;
+				}
+
+			}
+
+		}
+	}
+
 	OutputDebugStringA("[chs] 离开 ZhongShuAnalu_BeiLi");
 	return FALSE;
 }

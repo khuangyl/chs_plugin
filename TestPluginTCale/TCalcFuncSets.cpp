@@ -1373,16 +1373,16 @@ void TestPlugin3(int DataLen,float* Out,float* High,float* Low, float* TIME/*flo
 		KLine curr_k=ks[i];
 		KLine last=ks[i-1];
 
-		if(curr_k.high >= 16.719 && 
-			curr_k.high < 16.721 &&
-			curr_k.low >= 16.689   &&
-			curr_k.low <  16.691)
+		if(curr_k.high >= 9.399 && 
+			curr_k.high < 9.401 &&
+			curr_k.low >= 9.319   &&
+			curr_k.low <  9.321)
 		{
 
-		if(ks[i+1].high >= 16.709 && 
-			ks[i+1].high < 16.711 &&
-			ks[i+1].low >= 16.669   &&
-			ks[i+1].low <  16.671)
+		if(ks[i+1].high >= 9.319 && 
+			ks[i+1].high < 9.321 &&
+			ks[i+1].low >= 9.279   &&
+			ks[i+1].low <  9.281)
 			{
 				if(IsDebuggerPresent() == TRUE)
 				{
@@ -2266,6 +2266,29 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 				}
 			}
 		}
+		else
+		{
+			int k = 1;
+			float Vfloat = Bl[nStartk].PointHigh.fVal;
+			int n = 0;
+			while(nStartk+k < nLen)
+			{
+				if( Vfloat <  Bl[nStartk+k].PointHigh.fVal && Bl[nStartk+k].Bi_Direction == UP)
+				{
+					n = k;
+					Vfloat = Bl[nStartk+k].PointHigh.fVal;
+				}
+				k++;
+			}
+			k--;
+			if(Vfloat >  Bl[nStartk].PointHigh.fVal && n >=2 )
+			{
+				{
+					//Draw_QueDing_Xianduan_First_UP(Bl, nStartk, nStartk+n);//画第一情况的笔
+					Bl[nStartk+n].XianDuan_nprop = 1;
+				}
+			}
+		}
 	}
 
 
@@ -2472,6 +2495,30 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 		// 没有找到拐点，也就是一条直线，
 		if(bFlagGuaiDian  == FALSE)
 		{
+			int k = 1;
+			float Vfloat = Bl[nStartk].PointLow.fVal;
+			int n = 0;
+			while(nStartk+k < nLen)
+			{
+				if( Vfloat >  Bl[nStartk+k].PointLow.fVal && Bl[nStartk+k].Bi_Direction == DOWN)
+				{
+					n = k;
+					Vfloat = Bl[nStartk+k].PointLow.fVal;
+				}
+				k++;
+			}
+			k--;
+			if(Vfloat <  Bl[nStartk].PointLow.fVal && n >=2 )
+			{
+				{
+					//Draw_QueDing_Xianduan_First_DOWN(Bl, nStartk, nStartk+n);//画第一情况的笔
+					Bl[nStartk+n].XianDuan_nprop = -1;
+				}
+			}
+		}
+		else
+		{
+			//假设找到拐点了，可以直接画在拐点那里为止
 			int k = 1;
 			float Vfloat = Bl[nStartk].PointLow.fVal;
 			int n = 0;
