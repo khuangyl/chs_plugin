@@ -226,6 +226,41 @@ BOOL Is_FengXing_Ok(KLine* ks, int nlow, int nhigh, KDirection Direction)
 		int kl1 = 0; //底分型的高一点
 		int kh1 = 0; //顶分型的低一点
 
+
+		int kl_before = 0; //向上笔，底分型的前一个k线
+		int kh_after = 0; //向上笔，顶分型的后一个k线
+
+		for(int n = nlow-1; n > 0; n--)
+		{
+			if(ks[n].Ext.nMegre != -1)
+			{
+				kl_before = n;
+				break;
+			}
+		}
+
+		for(int n = nhigh+1; n < nhigh+100; n++)
+		{
+			if(ks[n].Ext.nMegre != -1)
+			{
+				kh_after = n;
+				break;
+			}
+		}
+
+		if(ks[kl_before].high >= ks[nhigh].high)
+		{
+			return FALSE;
+		}
+
+		if(ks[kh_after].low <= ks[nlow].low)
+		{
+			return FALSE;
+		}
+
+
+
+
 		for(int n = nlow+1; n < nhigh; n++)
 		{
 			if(ks[n].Ext.nMegre != -1)
@@ -256,8 +291,114 @@ BOOL Is_FengXing_Ok(KLine* ks, int nlow, int nhigh, KDirection Direction)
 	}
 	else
 	{
+		//方向是向下的
 		int kl1 = 0; //底分型的高一点
 		int kh1 = 0; //顶分型的低一点
+
+		int kh_before = 0; //向下笔，顶分型的前一个k线
+		int kl_after = 0; //向下笔，底分型的后一个k线
+
+
+		for(int n = nlow-1; n > 0; n--)
+		{
+			if(ks[n].Ext.nMegre != -1)
+			{
+				kh_before = n;
+				break;
+			}
+		}
+
+		for(int n = nhigh+1; n < nhigh+100; n++)
+		{
+			if(ks[n].Ext.nMegre != -1)
+			{
+				kl_after = n;
+				break;
+			}
+		}
+
+		if(ks[kh_before].low <= ks[nhigh].low)
+		{
+			return FALSE;
+		}
+
+		if(ks[kl_after].high >= ks[nlow].high)
+		{
+			return FALSE;
+		}
+
+		for(int n = nlow+1; n < nhigh; n++)
+		{
+			if(ks[n].Ext.nMegre != -1)
+			{
+				kh1 = n;
+				break;
+			}
+		}
+
+
+		for(int n = nhigh-1; n > nlow; n--)
+		{
+			if(ks[n].Ext.nMegre != -1)
+			{
+				kl1 = n;
+				break;
+			}
+		}
+
+		//1，顶分型的最高点比kl1的最高点要高
+		//2, 底分型的最低点比kh1的最低点低
+		if(ks[nlow].high > ks[kl1].high  && ks[nhigh].low < ks[kh1].low)
+		{
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+//**********************************************新笔*******************************************************/
+//首先进行2个分型进行判断，有时候分型不ok也不能算一笔
+BOOL Is_FengXing_Ok_NewOpen(KLine* ks, int nlow, int nhigh, KDirection Direction)
+{
+	if(Direction == UP)
+	{
+		int kl1 = 0; //底分型的高一点
+		int kh1 = 0; //顶分型的低一点
+
+		for(int n = nlow+1; n < nhigh; n++)
+		{
+			if(ks[n].Ext.nMegre != -1)
+			{
+				kl1 = n;
+				break;
+			}
+		}
+
+
+		for(int n = nhigh-1; n > nlow; n--)
+		{
+			if(ks[n].Ext.nMegre != -1)
+			{
+				kh1 = n;
+				break;
+			}
+		}
+
+		//1，顶分型的最高点比kl1的最高点要高
+		//2, 底分型的最低点比kh1的最低点低
+		if(ks[nhigh].high > ks[kl1].high  && ks[nlow].low < ks[kh1].low)
+		{
+			return TRUE;
+		}
+
+
+	}
+	else
+	{
+		//方向是向下的
+		int kl1 = 0; //底分型的高一点
+		int kh1 = 0; //顶分型的低一点
+
 
 		for(int n = nlow+1; n < nhigh; n++)
 		{
@@ -289,6 +430,162 @@ BOOL Is_FengXing_Ok(KLine* ks, int nlow, int nhigh, KDirection Direction)
 	return FALSE;
 }
 
+//判断是否是符合一笔条件,是否是向上的一笔
+//新笔，只需要判断两个分型就ok，就是
+BOOL bIsOne_Open_Up_NewOpen(KLine* ks, int nlow, int nhigh)
+{
+	if(nhigh - nlow < 4)
+	{
+		return FALSE;
+	}
+	//先进行分型判断
+	if(Is_FengXing_Ok_NewOpen(ks,  nlow,  nhigh, UP) == FALSE)
+	{
+		return FALSE;
+	}			
+
+
+	//if(1)
+	//{
+	//	int nTop = nlow;
+	//	for(int n = nlow+1; n <= nhigh; n++)
+	//	{
+	//		if(ks[n].Ext.nMegre != -1)
+	//		{
+	//			if(ks[n].low < ks[nTop].low)
+	//			{
+	//				nTop = n;
+	//			}
+	//		}
+	//	}
+	//	if(nTop != nlow)
+	//	{
+	//		ks[nlow].prop = 0;
+	//		ks[nTop].prop = -1;
+
+	//		nlow = nTop;
+	//	}
+	//}
+
+	int kl1 = 0; //底分型的高一点
+	int kh1 = 0; //顶分型的低一点
+
+	for(int n = nlow+1; n < nhigh; n++)
+	{
+		if(ks[n].Ext.nMegre != -1)
+		{
+			kl1 = n;
+			break;
+		}
+	}
+
+
+	for(int n = nhigh-1; n > nlow; n--)
+	{
+		if(ks[n].Ext.nMegre != -1)
+		{
+			kh1 = n;
+			break;
+		}
+	}
+
+	if(kl1 == kh1)
+	{
+		return FALSE;
+	}
+	//else if(kh1 - kl1 == 1)
+	//{
+	//	return FALSE;
+	//}
+
+
+	if(isUp(ks[kl1], ks[kh1]) == UP)
+	{
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+//判断是否是符合一笔条件,是否是向下的一笔
+BOOL bIsOne_Open_Down_NewOpen(KLine* ks, int nlow, int nhigh)
+{
+
+	if(nhigh - nlow < 4)
+	{
+		return FALSE;
+	}
+
+	if(Is_FengXing_Ok_NewOpen(ks,  nlow,  nhigh, DOWN) == FALSE)
+	{
+		return FALSE;
+	}	
+
+
+	//if(1)
+	//{
+	//	int nTop = nlow;
+	//	for(int n = nlow+1; n <= nhigh; n++)
+	//	{
+	//		if(ks[n].Ext.nMegre != -1)
+	//		{
+	//			if(ks[n].high > ks[nTop].high)
+	//			{
+	//				nTop = n;
+	//			}
+	//		}
+	//	}
+	//	if(nTop != nlow)
+	//	{
+	//		ks[nlow].prop = 0;
+	//		ks[nTop].prop = 1;
+
+	//		nlow = nTop;
+	//	}
+	//}
+
+	int kl1 = 0; //底分型的高一点
+	int kh1 = 0; //顶分型的低一点
+
+	for(int n = nlow+1; n < nhigh; n++)
+	{
+		if(ks[n].Ext.nMegre != -1)
+		{
+			kh1 = n;
+			break;
+		}
+	}
+
+
+	for(int n = nhigh-1; n > nlow; n--)
+	{
+		if(ks[n].Ext.nMegre != -1)
+		{
+			kl1 = n;
+			break;
+		}
+	}
+
+
+	if(kl1 == kh1)
+	{
+		return FALSE;
+	}
+	//else if(kl1 - kh1 == 1)
+	//{
+	//	return FALSE;
+	//}
+
+	if(isUp(ks[kh1], ks[kl1]) == DOWN)
+	{
+		return TRUE;
+	}
+
+
+	return FALSE;
+}
+
+//***********************************************新笔end*********************************************************/
 //判断是否是符合一笔条件,是否是向上的一笔
 BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
 {
@@ -704,125 +1001,6 @@ void Handle_Right_TFX_Dayu_Left_TFX(KLine* ks, int nlowDFX, int nhighDFX, int *O
 	}
 }
 
-//如果是返回值是TRUE就说明已经是缺口，并且已经处理过了，否则就返回false
-BOOL Handle_IS_QueKou(KLine*  ks, int n, int i)
-{
-	BOOL bFlag = FALSE;
-
-	//方向向上，如果    i的底 > n 顶，   i-1的顶 < n的顶
-	if(ks[i].low > ks[n].high && ks[i+1].high < ks[n].low)
-	{
-		bFlag = TRUE;
-	}
-	else
-	{
-		//不成缺口，直接退出
-		return FALSE;
-	}
-
-	//如果前一分型是顶分型
-	if(ks[n].prop == 1)
-	{
-		//如果现在的是顶分型,
-		if(ks[i].Ext.nDirector == UP)
-		{
-			//先把钱一个顶分型取消，在用现在的作为顶分型
-			ks[n].prop = 0;
-			ks[i].prop = 1;
-
-			// 再找前一个底分型，如果缺口还是比这个底分型大，就可以把i+1置为底分型
-			while(n)
-			{
-				n--;
-				if(n <=0)
-				{
-					break;
-				}
-
-				if(ks[n].prop)
-				{
-					if(ks[n].prop == -1)
-					{
-						if(ks[i].low > ks[n].high && ks[i+1].high < ks[n].low)
-						{
-							ks[i+1].prop = -1;
-							return TRUE;
-						}
-					}
-				}
-			}
-
-			return FALSE;
-		}
-		else if(ks[i].Ext.nDirector == DOWN)
-		{
-			//如果前一个是顶分型，如果现在是底分型，判断是否成为一笔的可能
-			if(bIsOne_Open_Down(ks, n, i))
-			{
-				//是一笔，把i 设置为
-				ks[i].prop = -1;
-				ks[i+1].prop = 1;
-				return TRUE;
-			}
-			else
-			{
-				//如果不能成为1笔，再往前找到上一个分型
-				return FALSE;
-			}
-		}
-
-	}
-	else if(ks[n].prop == -1)
-	{
-		//如果现在的是顶分型,
-		if(ks[i].Ext.nDirector == DOWN)
-		{
-			//先把钱一个顶分型取消，在用现在的作为顶分型
-			ks[n].prop = 0;
-			ks[i].prop = 1;
-
-			// 再找前一个底分型，如果缺口还是比这个底分型大，就可以把i+1置为底分型
-			while(n)
-			{
-				n--;
-				if(n <=0)
-				{
-					break;
-				}
-
-				if(ks[n].prop)
-				{
-					if(ks[n].prop == 1)
-					{
-						if(ks[i].low > ks[n].high && ks[i+1].high < ks[n].low)
-						{
-							ks[i+1].prop = 1;
-							return TRUE;
-						}
-					}
-				}
-			}
-
-			return FALSE;
-		}
-		else if(ks[i].Ext.nDirector == UP)
-		{
-			//如果前一个是顶分型，如果现在是底分型，判断是否成为一笔的可能
-			if(bIsOne_Open_Up(ks, n, i))
-			{
-				//是一笔，把i 设置为
-				ks[i].prop = 1;
-				ks[i+1].prop = -1;
-				return TRUE;
-			}
-			else
-			{
-				//如果不能成为1笔，再往前找到上一个分型
-				return FALSE;
-			}
-		}
-	}
-}
 //找上一个分型，然后根据传进来的方向，找到这个方向是不是有5个同方向的来确定分型
 int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Outi)
 {
@@ -866,23 +1044,6 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 						ks[i].prop = 1;      //暂时先去掉
 						ks[i].Ext.nProp = 1; //暂时先去掉
 						
-						//不能简单的就直接替换，要先找到前一个底分型，然后，在判断两点直接能不能成为真正的一笔
-						//for (int k = n; k >0; k--)
-						//{
-						//	if(ks[k].prop == -1)
-						//	{
-						//		if(bIsOne_Open_Up(ks, k, i))
-						//		{
-						//			ks[i].prop = 1;
-						//			ks[i].Ext.nProp = 1;
-						//			return 0;
-						//		}
-						//	}
-						//}
-						
-						//Handle_Right_TFX_Dayu_Left_TFX(ks, n, i, Outi);
-						//不能简单的
-
 						return 0;
 					}
 				}
@@ -891,7 +1052,7 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 					//找到底分型以后，先判断，必须是向上方向
 					if(isUp(k1, k2) == UP)
 					{
-						if(bIsOne_Open_Up(ks, n, i))
+						if(bIsOne_Open_Up_NewOpen(ks, n, i))
 						{
 							ks[i].prop = 1;
 							ks[i].Ext.nProp = 1;
@@ -937,11 +1098,6 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 				KLine k1 = ks[n];
 				KLine k2 = ks[i];
 
-				//if(Handle_IS_QueKou(ks, n, i))
-				//{
-				//	return 0;
-				//}
-
 				if(ks[n].prop == -1)//底分型
 				{
 					//底分型标志位, 不符合现在找的目标，两个底分型做对比
@@ -959,24 +1115,6 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 						ks[i].prop = -1;
 						ks[i].Ext.nProp = -1;
 
-						//for (int k = n; k >0; k--)
-						//{
-						//	if(ks[k].prop == 1)
-						//	{
-						//		if(bIsOne_Open_Down(ks, k, i))
-						//		{
-						//			ks[i].prop = -1;
-						//			ks[i].Ext.nProp = -1;
-						//			return 0;
-						//		}
-						//	}
-						//}
-					
-						//不能简单的把左边的清掉那么简单，，
-						//1先清掉左边的底，然后往前找，找到前一个顶，再做一次从（上一个顶--->现在这底 之间的处理）
-						//Handle_Right_DFX_Diyu_Left_DFX(ks, n, i, Outi);
-
-
 						return 0;
 					}
 				}
@@ -985,7 +1123,7 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 					//找到底分型以后，先判断，必须是向上方向
 					if(isUp(k1, k2) == DOWN)
 					{
-						if(bIsOne_Open_Down(ks, n, i))
+						if(bIsOne_Open_Down_NewOpen(ks, n, i))
 						{
 							ks[i].prop = -1;
 							ks[i].Ext.nProp = -1;
@@ -1535,62 +1673,89 @@ int Get_GuaiDian_Before_Bi(Bi_Line *Bl, int k, KDirection nDirect, int nStart)
 
 }
 
+
+int Get_GuaiDian_Real(Bi_Line *Bl, int k, KDirection nDirect, int nStart)
+{
+	if(nDirect == UP)
+	{
+		int n = k;
+		k = k - 2;
+		while(k  > nStart)
+		{
+			if(Bl[k].XianDuan_nprop)
+			{
+				break;
+			}
+
+			if( Bl[k].PointHigh.fVal != Bl[n].PointHigh.fVal )
+			{
+				return k+2;
+			}
+
+			k = k - 2;
+		}
+	}
+	else
+	{
+		int n = k;
+		k = k - 2;
+		while(k  > nStart)
+		{
+			if(Bl[k].XianDuan_nprop)
+			{
+				break;
+			}
+
+			if(Bl[k].PointLow.fVal != Bl[n].PointLow.fVal )
+			{
+				return k+2;
+			}
+
+			k = k - 2;
+		}
+	}
+
+	return 0;
+}
+
+
 int Te_Zheng_XuLie_Meger_For_FengXing(Bi_Line *Bl, int nStartk, int nLen, Bi_Line *BlxOut)
 {
 	//BlxOut = new Bi_Line[nLen];
 	memcpy(BlxOut, Bl, sizeof(Bi_Line)*nLen);
 
-	//向上的线段，
-	if(BlxOut[nStartk].Bi_Direction == UP)
+
+	KDirection Directionxx = NODIRECTION;
+
+	Bi_Line Temp = BlxOut[nStartk+1];
+
+	for (int k = 0; nStartk+k*2+3 < nLen; k++)
 	{
-		//首先特征序列进行包含，先找到
-		for (int k = 0; nStartk+k*2+3 < nLen; k++)
+		int nRet = isIncluded_XianDuan(Temp,  BlxOut[nStartk+k*2+3]);
+		if(nRet)
 		{
-			int nRet = isIncluded_XianDuan(BlxOut[nStartk+k*2+1],  BlxOut[nStartk+k*2+3]);
-			if( nRet)//只有左包含才处理, 找分型，左右包含都要处理
+			if(Directionxx == NODIRECTION)
 			{
-				//不管左右包含都是取上
-				Bi_Line temp =  kMerge_XianDuan(BlxOut[nStartk+k*2+1], BlxOut[nStartk+k*2+3], UP);
+			}
+			else if(Directionxx == UP)
+			{
+				Bi_Line tempx =  kMerge_XianDuan(BlxOut[nStartk+k*2+1], BlxOut[nStartk+k*2+3], UP);
 				BlxOut[nStartk+k*2+1].nMeger = -1;
 				BlxOut[nStartk+k*2+3].nMeger = 1;
-
-
-				//if(BlxOut[nStartk+k*2+3].PointHigh.fVal != temp.PointHigh.fVal)
 				{
 					//说明比前一个高点低
 					BlxOut[nStartk+k*2+3].PointHigh.MegerIndex = BlxOut[nStartk+k*2+3].PointHigh.nIndex;//保存原来的点，
 					BlxOut[nStartk+k*2+3].PointHigh.nIndex = BlxOut[nStartk+k*2+1].PointHigh.nIndex;//把新店赋值给它				 
 				}
 
-				BlxOut[nStartk+k*2+3].PointHigh.fVal = temp.PointHigh.fVal;
-				BlxOut[nStartk+k*2+3].PointLow.fVal = temp.PointLow.fVal;
+				BlxOut[nStartk+k*2+3].PointHigh.fVal = tempx.PointHigh.fVal;
+				BlxOut[nStartk+k*2+3].PointLow.fVal = tempx.PointLow.fVal;
 			}
-			//else if(nRet == 1)
-			//{
-			//	//右包含
-			//	//BlxOut[nStartk+k*2+1].nMegerx2 = 1;
-
-			//	//找分型的时候右包含也要处理
-
-
-			//}
-
-		}
-	}
-	else
-	{
-		//首先特征序列进行包含，先找到
-		for (int k = 0; nStartk+k*2+3 < nLen; k++)
-		{
-			int nRet = isIncluded_XianDuan(BlxOut[nStartk+k*2+1],  BlxOut[nStartk+k*2+3]);
-			if(nRet)
+			else if(Directionxx == DOWN)
 			{
-				//不管左右包含都是取上
 				Bi_Line temp =  kMerge_XianDuan(BlxOut[nStartk+k*2+1], BlxOut[nStartk+k*2+3], DOWN);
 				BlxOut[nStartk+k*2+1].nMeger = -1;
 				BlxOut[nStartk+k*2+3].nMeger = 1;
-
-				//if(BlxOut[nStartk+k*2+3].PointLow.fVal != temp.PointLow.fVal)
 				{
 					//说明比前一个高点低
 					BlxOut[nStartk+k*2+3].PointLow.MegerIndex = BlxOut[nStartk+k*2+3].PointLow.nIndex;//保存原来的点，
@@ -1600,14 +1765,86 @@ int Te_Zheng_XuLie_Meger_For_FengXing(Bi_Line *Bl, int nStartk, int nLen, Bi_Lin
 				BlxOut[nStartk+k*2+3].PointHigh.fVal = temp.PointHigh.fVal;
 				BlxOut[nStartk+k*2+3].PointLow.fVal = temp.PointLow.fVal;
 			}
-			//else if(nRet == 1)
-			//{
-			//	//右包含
-			//	BlxOut[nStartk+k*2+1].nMegerx2 = 1;
-			//}
+		}
+		else
+		{
+			//不包含，只改变方向
+			Directionxx = isUp_XianDuan(Temp,  BlxOut[nStartk+k*2+3]);
 
 		}
+
+		Temp = BlxOut[nStartk+k*2+3];
+
 	}
+
+	//向上的线段，
+	//if(BlxOut[nStartk].Bi_Direction == UP)
+	//{
+	//	//首先特征序列进行包含，先找到
+	//	for (int k = 0; nStartk+k*2+3 < nLen; k++)
+	//	{
+	//		int nRet = isIncluded_XianDuan(BlxOut[nStartk+k*2+1],  BlxOut[nStartk+k*2+3]);
+	//		if( nRet)//只有左包含才处理, 找分型，左右包含都要处理
+	//		{
+	//			//不管左右包含都是取上
+	//			Bi_Line temp =  kMerge_XianDuan(BlxOut[nStartk+k*2+1], BlxOut[nStartk+k*2+3], UP);
+	//			BlxOut[nStartk+k*2+1].nMeger = -1;
+	//			BlxOut[nStartk+k*2+3].nMeger = 1;
+
+
+	//			//if(BlxOut[nStartk+k*2+3].PointHigh.fVal != temp.PointHigh.fVal)
+	//			{
+	//				//说明比前一个高点低
+	//				BlxOut[nStartk+k*2+3].PointHigh.MegerIndex = BlxOut[nStartk+k*2+3].PointHigh.nIndex;//保存原来的点，
+	//				BlxOut[nStartk+k*2+3].PointHigh.nIndex = BlxOut[nStartk+k*2+1].PointHigh.nIndex;//把新店赋值给它				 
+	//			}
+
+	//			BlxOut[nStartk+k*2+3].PointHigh.fVal = temp.PointHigh.fVal;
+	//			BlxOut[nStartk+k*2+3].PointLow.fVal = temp.PointLow.fVal;
+	//		}
+	//		//else if(nRet == 1)
+	//		//{
+	//		//	//右包含
+	//		//	//BlxOut[nStartk+k*2+1].nMegerx2 = 1;
+
+	//		//	//找分型的时候右包含也要处理
+
+
+	//		//}
+
+	//	}
+	//}
+	//else
+	//{
+	//	//首先特征序列进行包含，先找到
+	//	for (int k = 0; nStartk+k*2+3 < nLen; k++)
+	//	{
+	//		int nRet = isIncluded_XianDuan(BlxOut[nStartk+k*2+1],  BlxOut[nStartk+k*2+3]);
+	//		if(nRet)
+	//		{
+	//			//不管左右包含都是取上
+	//			Bi_Line temp =  kMerge_XianDuan(BlxOut[nStartk+k*2+1], BlxOut[nStartk+k*2+3], DOWN);
+	//			BlxOut[nStartk+k*2+1].nMeger = -1;
+	//			BlxOut[nStartk+k*2+3].nMeger = 1;
+
+	//			//if(BlxOut[nStartk+k*2+3].PointLow.fVal != temp.PointLow.fVal)
+	//			{
+	//				//说明比前一个高点低
+	//				BlxOut[nStartk+k*2+3].PointLow.MegerIndex = BlxOut[nStartk+k*2+3].PointLow.nIndex;//保存原来的点，
+	//				BlxOut[nStartk+k*2+3].PointLow.nIndex = BlxOut[nStartk+k*2+1].PointLow.nIndex;//把新店赋值给它
+	//			}
+
+	//			BlxOut[nStartk+k*2+3].PointHigh.fVal = temp.PointHigh.fVal;
+	//			BlxOut[nStartk+k*2+3].PointLow.fVal = temp.PointLow.fVal;
+	//		}
+	//		//else if(nRet == 1)
+	//		//{
+	//		//	//右包含
+	//		//	BlxOut[nStartk+k*2+1].nMegerx2 = 1;
+	//		//}
+
+	//	}
+	//}
 
 	return 0;
 }
@@ -1671,6 +1908,10 @@ int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 					;
 				}
 
+				if(Direct != NODIRECTION)
+				{
+					nDirectxx = Direct;
+				}
 				Temp = BlxOut[nStartk + 2*k+1];
 			}
 		}
@@ -1728,6 +1969,10 @@ int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 						}
 					}
 
+					if(Direct != NODIRECTION)
+					{
+						nDirectxx = Direct;
+					}
 					Temp = BlxOut[nStartk + 2*k+1];
 				}
 			}
@@ -1786,9 +2031,12 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 					int np = Get_GuaiDian_Before_Bi(BlxOut, nStartk+2*k+1, UP, nStartk);
 
 					//DrawGuaiDian_Before_bi(BlxOut,  nStartk, np);//画拐点前的一笔
+					//还有找到真正的拐点笔
+					int nreal_gd = Get_GuaiDian_Real(BlxOut, nStartk+2*k+1, UP, nStartk);//拐点前的一笔
+
 					if(np)
 					{
-						if(BlxOut[np+2].PointLow.fVal <= BlxOut[np].PointHigh.fVal)
+						if(BlxOut[nreal_gd].PointLow.fVal <= BlxOut[np].PointHigh.fVal)
 						{
 							int nRet = 0;
 
@@ -1889,6 +2137,7 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 								else
 								{
 									//::MessageBoxA(m_hWnd, "找到分型也不能形成线段", NULL, MB_OK);
+									Temp = BlxOut[nStartk+2*k+3];
 								}
 
 							}
@@ -1939,7 +2188,7 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 					{
 						Temp = BlxOut[nStartk+2*k+3];
 					}
-					
+
 				}
 				else
 				{
@@ -2006,11 +2255,27 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 		Bi_Line Temp = BlxOut[nStartk+1];
 		for(int k = 0; nStartk+2*k+3 < nLen; k++)
 		{
+
 			//if(/*BlxOut[nStartk+2*k+3].nMeger != -1 &&*/ BlxOut[nStartk+2*k+3].nMegerx2 == 0)
 			{
 				//先找到一个特征序列的一个拐点，让判断是是不是满足条件1或者2
 				if(BlxOut[nStartk+2*k+3].PointLow.fVal > Temp.PointLow.fVal)
 				{
+
+					if(1)
+					{
+						if(IsDebuggerPresent() == TRUE)
+						{
+							if(		BlxOut[nStartk+2*k+3].PointLow.fVal > 15.169 
+								&&	BlxOut[nStartk+2*k+3].PointLow.fVal < 15.171
+								&&  BlxOut[nStartk+2*k+3].PointHigh.fVal > 15.269
+								&&	BlxOut[nStartk+2*k+3].PointHigh.fVal < 15.271)
+							{
+								__asm int 3
+							}
+						}
+					}
+
 					bFlagGuaiDian = TRUE;
 					//DrawGuaiDian(BlxOut,  nStartk,  k);//画拐点的笔
 
@@ -2022,9 +2287,12 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 					int np = Get_GuaiDian_Before_Bi(BlxOut, nStartk+2*k+1, DOWN, nStartk);
 
 					//DrawGuaiDian_Before_bi(BlxOut,  nStartk, np);//画拐点前的一笔
+					//还有找到真正的拐点笔
+					int nreal_gd = Get_GuaiDian_Real(BlxOut, nStartk+2*k+1, DOWN, nStartk);//拐点前的一笔
+
 					if(np)
 					{
-						if(BlxOut[np+2].PointHigh.fVal >= BlxOut[np].PointLow.fVal)//是否满足第一种情况
+						if(BlxOut[nreal_gd].PointHigh.fVal >= BlxOut[np].PointLow.fVal)//是否满足第一种情况
 						{
 							int nRet = 0;
 
@@ -2121,6 +2389,7 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 								else
 								{
 									//::MessageBoxA(m_hWnd, "找到分型也不能形成线段", NULL, MB_OK);
+									Temp = BlxOut[nStartk+2*k+3];
 								}
 
 							}
@@ -2173,7 +2442,7 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 					{
 						Temp = BlxOut[nStartk+2*k+3];
 					}
-					
+
 				}
 				else
 				{
@@ -2210,6 +2479,7 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 		}
 		else
 		{
+			//假设找到拐点了，可以直接画在拐点那里为止
 			int k = 1;
 			float Vfloat = Bl[nStartk].PointLow.fVal;
 			int n = 0;
@@ -2236,6 +2506,7 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 	delete BlxOut;
 	return 0;
 }
+
 
 //线段分析函数
 void AnalyXD(Bi_Line *Bl, int nLen)
