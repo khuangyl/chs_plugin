@@ -750,27 +750,6 @@ BOOL bIsOne_Open_Up_NewOpen(KLine* ks, int nlow, int nhigh)
 	}			
 
 
-	//if(1)
-	//{
-	//	int nTop = nlow;
-	//	for(int n = nlow+1; n <= nhigh; n++)
-	//	{
-	//		if(ks[n].Ext.nMegre != -1)
-	//		{
-	//			if(ks[n].low < ks[nTop].low)
-	//			{
-	//				nTop = n;
-	//			}
-	//		}
-	//	}
-	//	if(nTop != nlow)
-	//	{
-	//		ks[nlow].prop = 0;
-	//		ks[nTop].prop = -1;
-
-	//		nlow = nTop;
-	//	}
-	//}
 
 	int kl1 = 0; //底分型的高一点
 	int kh1 = 0; //顶分型的低一点
@@ -798,16 +777,22 @@ BOOL bIsOne_Open_Up_NewOpen(KLine* ks, int nlow, int nhigh)
 	{
 		return FALSE;
 	}
-	//else if(kh1 - kl1 == 1)
-	//{
-	//	return FALSE;
-	//}
+	else if(kl1 + 1 == kh1)
+	{
+		return FALSE;
+	}
 
 
 	if(isUp(ks[kl1], ks[kh1]) == UP)
 	{
+		//顺便在这里做一下缺口的处理，如果ks[nhigh+1]和ks[nhigh]有个大缺口，即已经构成了一笔，的情况下
+		if(ks[nhigh+1].high < ks[nlow].low)
+		{
+			ks[nhigh+1].prop = -1;
+		}
 		return TRUE;
 	}
+	
 
 	return FALSE;
 }
@@ -826,28 +811,6 @@ BOOL bIsOne_Open_Down_NewOpen(KLine* ks, int nlow, int nhigh)
 		return FALSE;
 	}	
 
-
-	//if(1)
-	//{
-	//	int nTop = nlow;
-	//	for(int n = nlow+1; n <= nhigh; n++)
-	//	{
-	//		if(ks[n].Ext.nMegre != -1)
-	//		{
-	//			if(ks[n].high > ks[nTop].high)
-	//			{
-	//				nTop = n;
-	//			}
-	//		}
-	//	}
-	//	if(nTop != nlow)
-	//	{
-	//		ks[nlow].prop = 0;
-	//		ks[nTop].prop = 1;
-
-	//		nlow = nTop;
-	//	}
-	//}
 
 	int kl1 = 0; //底分型的高一点
 	int kh1 = 0; //顶分型的低一点
@@ -876,13 +839,18 @@ BOOL bIsOne_Open_Down_NewOpen(KLine* ks, int nlow, int nhigh)
 	{
 		return FALSE;
 	}
-	//else if(kl1 - kh1 == 1)
-	//{
-	//	return FALSE;
-	//}
+	else if(kh1 + 1 == kl1)
+	{
+		return FALSE;
+	}
 
 	if(isUp(ks[kh1], ks[kl1]) == DOWN)
 	{
+		//顺便在这里做一下缺口的处理，如果ks[nhigh+1]和ks[nhigh]有个大缺口，即已经构成了一笔，的情况下
+		if(ks[nhigh+1].low > ks[nlow].high)
+		{
+			ks[nhigh+1].prop = 1;
+		}
 		return TRUE;
 	}
 	
@@ -1353,6 +1321,21 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 						ks[i].prop = 1;      //暂时先去掉
 						ks[i].Ext.nProp = 1; //暂时先去掉
 
+						//这里也要做一次分型缺口的判断，就是如果缺口类型在分型的时候，就要判断
+						//顺便在这里做一下缺口的处理，如果ks[nhigh+1]和ks[nhigh]有个大缺口，即已经构成了一笔，的情况下
+						//(这个代码在bIsOne_Open_Up_NewOpen就有的)
+						//先找到底分型
+						for (int kkk = n; kkk > 0; kkk--)
+						{
+							if(ks[kkk].prop == -1)
+							{
+								if(ks[i+1].high < ks[kkk].low)
+								{
+									ks[i+1].prop = -1;
+								}
+								break;
+							}
+						}
 						return 0;
 					}
 				}
@@ -1429,6 +1412,22 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 						ks[i].prop = -1;
 						ks[i].Ext.nProp = -1;
 
+
+						//这里也要做一次分型缺口的判断，就是如果缺口类型在分型的时候，就要判断
+						//顺便在这里做一下缺口的处理，如果ks[nhigh+1]和ks[nhigh]有个大缺口，即已经构成了一笔，的情况下
+						//(这个代码在bIsOne_Open_Up_NewOpen就有的)
+						//先找到底分型
+						for (int kkk = n; kkk > 0; kkk--)
+						{
+							if(ks[kkk].prop == 1)
+							{
+								if(ks[i+1].low > ks[kkk].high)
+								{
+									ks[i+1].prop = 1;
+								}
+								break;
+							}
+						}
 						return 0;
 					}
 				}
@@ -1542,16 +1541,16 @@ void TestPlugin3(int DataLen,float* Out,float* High,float* Low, float* TIME/*flo
 		KLine curr_k=ks[i];
 		KLine last=ks[i-1];
 
-		if(curr_k.high >= 23.629 && 
-			curr_k.high < 23.631 &&
-			curr_k.low >= 21.379   &&
-			curr_k.low <  21.381)
+		if(curr_k.high >= 9.489 && 
+			curr_k.high < 9.491 &&
+			curr_k.low >= 9.459   &&
+			curr_k.low <  9.461)
 		{
 
-		if(ks[i+1].high >= 24.199 && 
-			ks[i+1].high < 24.201 &&
-			ks[i+1].low >= 22.939   &&
-			ks[i+1].low <  22.941)
+		if(ks[i+1].high >= 9.489 && 
+			ks[i+1].high < 9.491 &&
+			ks[i+1].low >= 9.489   &&
+			ks[i+1].low <  9.491)
 			{
 				if(IsDebuggerPresent() == TRUE)
 				{
@@ -2336,13 +2335,13 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 
 								//找到底分型了，然后看看这个底分型和拐点之间是否已经是一个线段
 								//判断方法，拐点间到npos如果有笔高过拐点，那说这个拐点不是一个线段的点，需要用用高一点的点来继续
-								int j = k;
+								int j = k+1;
 								//for (int j = nStartk+2*k+1; j <= npos; j++)
 								BOOL bFlagRet = FALSE;
-								for (; nStartk+2*j+1 <= npos; j++)
+								for (; nStartk+2*j <= npos; j++)
 								{
 									//如果有点低于某个笔的点低于拐点的前一个点，也能构成
-									if(BlxOut[nStartk+2*j+1].PointHigh.fVal > BlxOut[nStartk+2*k+1].PointHigh.fVal)
+									if(Bl[nStartk+2*j].PointHigh.fVal > Bl[nStartk+2*k+1].PointHigh.fVal)
 									{
 										k = j-1;
 										bFlagRet = TRUE;
@@ -2592,13 +2591,13 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 
 								//找到底分型了，然后看看这个底分型和拐点之间是否已经是一个线段
 								//判断方法，拐点间到npos如果有笔高过拐点，那说这个拐点不是一个线段的点，需要用用高一点的点来继续
-								int j = k;
+								int j = k+1;
 								//for (int j = nStartk+2*k+1; j <= npos; j++)
 								BOOL bFlagRet = FALSE;
-								for (; nStartk+2*j+1 <= npos; j++)
+								for (; nStartk+2*j <= npos; j++)
 								{
 									//如果有点低于某个笔的点低于拐点的前一个点，也能构成
-									if(BlxOut[nStartk+2*j+1].PointLow.fVal < BlxOut[nStartk+2*k+1].PointLow.fVal)
+									if(Bl[nStartk+2*j].PointLow.fVal < Bl[nStartk+2*k+1].PointLow.fVal)
 									{
 										k = j-1;
 										bFlagRet = TRUE;
