@@ -238,6 +238,12 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 
 
 	}
+	else
+	{
+		char szbuff[256] = {0};
+		sprintf(szbuff,"[chs] 打不开文件 错误码=%d", GetLastError());
+		OutputDebugStringA(szbuff);
+	}
 	
 	return FALSE;
 }
