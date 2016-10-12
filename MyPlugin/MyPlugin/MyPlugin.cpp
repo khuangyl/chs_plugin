@@ -90,7 +90,7 @@ float GetRealPrice(DWORD dwOrgPrice)
 
 BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,short nDataNum,BYTE nTQ,unsigned long unused) //按最近数据计算
 {
-	if(strcmp("600703", Code) == 0)
+	if(strcmp("000563", Code) == 0)
 	{
 		if(IsDebuggerPresent() == TRUE)
 		{
@@ -115,12 +115,12 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 		if(nSetCode == 0)
 		{
 			//深市
-			sprintf(szPath, "C:\\88-personal\\stock\\tdx\\vipdoc\\sz\\fzline\\sz%s.lc5", Code);
+			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sz\\fzline\\sz%s.lc5", Code);
 		}
 		else
 		{
 			//沪市
-			sprintf(szPath, "C:\\88-personal\\stock\\tdx\\vipdoc\\sz\\fzline\\sh%s.lc5", Code);
+			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sh\\fzline\\sh%s.lc5", Code);
 
 		}
 	}
@@ -130,12 +130,12 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 		if(nSetCode == 0)
 		{
 			//深市
-			sprintf(szPath, "C:\\88-personal\\stock\\tdx\\vipdoc\\sz\\minline\\sz%s.lc1", Code);
+			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sz\\minline\\sz%s.lc1", Code);
 		}
 		else
 		{
 			//沪市
-			sprintf(szPath, "C:\\88-personal\\stock\\tdx\\vipdoc\\sh\\minline\\sh%s.lc1", Code);
+			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sh\\minline\\sh%s.lc1", Code);
 		}
 	}
 	else if(DataType == PER_DAY)
@@ -213,8 +213,8 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 			else if(DataType == PER_MIN5)
 			{
 				//5_分钟
-				//bRet = ZhongShuAnalu_BeiLi();
-				bRet = ZhongShuAnalu_BeiLi_5Min();
+				bRet = ZhongShuAnalu_BeiLi();
+				//bRet = ZhongShuAnalu_BeiLi_5Min();
 			}
 
 			CloseHandle(hFile);
