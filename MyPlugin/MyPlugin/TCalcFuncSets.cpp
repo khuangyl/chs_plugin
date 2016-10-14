@@ -357,6 +357,39 @@ BOOL Is_FengXing_Ok(KLine* ks, int nlow, int nhigh, KDirection Direction)
 	return FALSE;
 }
 //**********************************************新笔*******************************************************/
+//特殊处理函数：如果是分型的一笔破坏了顶底之间的关系这个时候需要单独来处理
+void SpecHandleUp(KLine* ks, int nlow, int nhigh)
+{
+	int kl1 = 0; //底分型的高一点
+	int kh1 = 0; //顶分型的低一点
+
+	for(int n = nlow+1; n < nhigh; n++)
+	{
+		if(ks[n].Ext.nMegre != -1)
+		{
+			kl1 = n;
+			break;
+		}
+	}
+
+
+	for(int n = nhigh-1; n > nlow; n--)
+	{
+		if(ks[n].Ext.nMegre != -1)
+		{
+			kh1 = n;
+			break;
+		}
+	}
+
+	//如果出现kl1大于kh1的时候做特殊处理
+	if(ks[kl1].high >= ks[kh1].high)
+	{
+
+	}
+}
+
+
 //首先进行2个分型进行判断，有时候分型不ok也不能算一笔
 BOOL Is_FengXing_Ok_NewOpen(KLine* ks, int nlow, int nhigh, KDirection Direction)
 {
@@ -438,9 +471,16 @@ BOOL bIsOne_Open_Up_NewOpen(KLine* ks, int nlow, int nhigh)
 	{
 		return FALSE;
 	}
+
+
 	//先进行分型判断
 	if(Is_FengXing_Ok_NewOpen(ks,  nlow,  nhigh, UP) == FALSE)
 	{
+
+		//补锅：如果有一根k线太过分的话，就要这个k线见鬼去吧，
+		//做法如下：如果找到一个最低点和这个最新的顶点能形成一个向下一笔和向上的一笔的话可以了
+
+
 		return FALSE;
 	}			
 
@@ -458,6 +498,8 @@ BOOL bIsOne_Open_Up_NewOpen(KLine* ks, int nlow, int nhigh)
 		}
 	}
 
+	kl1 = nlow+1;
+
 
 	for(int n = nhigh-1; n > nlow; n--)
 	{
@@ -467,6 +509,7 @@ BOOL bIsOne_Open_Up_NewOpen(KLine* ks, int nlow, int nhigh)
 			break;
 		}
 	}
+
 
 	if(kl1 == kh1)
 	{
@@ -519,6 +562,7 @@ BOOL bIsOne_Open_Down_NewOpen(KLine* ks, int nlow, int nhigh)
 		}
 	}
 
+	kh1 = nlow+1;
 
 	for(int n = nhigh-1; n > nlow; n--)
 	{
@@ -528,6 +572,8 @@ BOOL bIsOne_Open_Down_NewOpen(KLine* ks, int nlow, int nhigh)
 			break;
 		}
 	}
+
+
 
 
 	if(kl1 == kh1)
@@ -2690,7 +2736,6 @@ void TestPlugin4(int DataLen,float* High,float* Low)
 	g_nBlSize = nblCount;
 	memcpy((char*)g_Bl, (char*)Bl, sizeof(Bi_Line)*nblCount);
 
-
 	delete []Bl;
 }
 
@@ -3395,7 +3440,7 @@ BOOL ZhongShuAnalu_BeiLi()
 				//去掉几个明显的
 
 				//碰到这个高压线都要死, 就是最后一个中枢以后只要有一笔超过了上一个中枢的低点了，到排除掉
-				int nLastXD = pairdata[0].d2.nXDEnd_Index;
+				int nLastXD = pairdata[0].d2.nXDEnd_Index+1;
 				for(; nLastXD < nSize_xd_l; nLastXD++)
 				{
 					if(g_xd_l[nLastXD].PointHigh.fVal > pairdata[0].d1.fkk_Min)
