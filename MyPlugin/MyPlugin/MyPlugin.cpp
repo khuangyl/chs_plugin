@@ -90,11 +90,11 @@ float GetRealPrice(DWORD dwOrgPrice)
 
 BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,short nDataNum,BYTE nTQ,unsigned long unused) //按最近数据计算
 {
-	if(strcmp("000563", Code) == 0)
+	if(strcmp("300274", Code) == 0)
 	{
 		if(IsDebuggerPresent() == TRUE)
 		{
-			__asm int 3
+			//__asm int 3
 		}
 	}
 	char sztmp[128] = {0};
@@ -109,7 +109,7 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 	
 	char szPath[MAX_PATH] = {0};
 
-	if(DataType == PER_MIN5)
+	if(DataType == PER_MIN5 || DataType == PER_HOUR)//1小时的就是预测5分钟
 	{
 		//5分钟
 		if(nSetCode == 0)
@@ -124,7 +124,7 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 
 		}
 	}
-	else if(DataType == PER_MIN1)
+	else if(DataType == PER_MIN1 || DataType == PER_MIN30)//30分钟就是预测1分钟
 	{
 		//1分钟
 		if(nSetCode == 0)
@@ -216,6 +216,12 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 				bRet = ZhongShuAnalu_BeiLi();
 				//bRet = ZhongShuAnalu_BeiLi_5Min();
 			}
+			else if(PER_MIN30 == DataType || DataType == PER_HOUR)
+			{
+				//1个小时是预测的
+				bRet = ZhongShuAnaly_YuCe();
+			}
+
 
 			CloseHandle(hFile);
 			delete[] szBuff;
@@ -233,6 +239,7 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 			delete[] szBuff;
 			delete[] pHigh;
 			delete[] pLow;
+			CloseHandle(hFile);
 			return FALSE;
 		}
 

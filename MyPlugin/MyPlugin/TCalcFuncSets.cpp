@@ -574,8 +574,6 @@ BOOL bIsOne_Open_Down_NewOpen(KLine* ks, int nlow, int nhigh)
 	}
 
 
-
-
 	if(kl1 == kh1)
 	{
 		return FALSE;
@@ -600,6 +598,7 @@ BOOL bIsOne_Open_Down_NewOpen(KLine* ks, int nlow, int nhigh)
 }
 
 //***********************************************新笔end*********************************************************/
+
 //判断是否是符合一笔条件,是否是向上的一笔
 BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
 {
@@ -3644,10 +3643,10 @@ BOOL ZhongShuAnaly_YuCe()
 			}
 		}
 
-		delete[] g_xd_l;
+		//delete[] g_xd_l;
 
 		//如果有
-		if(nCount )
+		if(nCount)
 		{
 
 			//预测的时候要找到最后的中枢，如果是最后一个中枢后有3个线段，而且第一个线段是向下，并且第一个线段的长度和时间比第一个小
@@ -3655,7 +3654,7 @@ BOOL ZhongShuAnaly_YuCe()
 			int nIndexx = pairdata[0].d2.nXDEnd_Index;
 			//for (int n = 0; n < nSize_xd_l; n++)
 			//if(g_xd_l[n].XianDuan_nprop == 1)
-			if(nIndexx < nSize_xd_l && (nSize_xd_l - nIndexx) == 4)
+			if(nIndexx < nSize_xd_l && (nSize_xd_l - nIndexx) >= 4)
 			{
 				if(g_xd_l[nIndexx+1].Bi_Direction == DOWN)
 				{
@@ -3663,11 +3662,23 @@ BOOL ZhongShuAnaly_YuCe()
 					//pairdata[0].fChangDu
 					float fprice = g_xd_l[nIndexx+1].PointHigh.fVal - g_xd_l[nIndexx+1].PointLow.fVal;
 					//int   nTimeCount = g_xd_l[nIndexx+1].
+					float fVDist_d = pairdata[0].d1.fOut_Price - pairdata[0].d2.fIn_Price;
+					if(fVDist_d > fprice)
+					{
+						{
+							return TRUE;
+							delete[] g_xd_l;
+						}
+						
+					}
 					
 				}
 			}	
 
+			delete[] g_xd_l;
 			return FALSE;
+
+
 			if(nCount == 1)
 			{
 				//d1的前一笔必须是向下的, d2也是向下的
