@@ -407,6 +407,8 @@ BOOL Is_FengXing_Ok_NewOpen(KLine* ks, int nlow, int nhigh, KDirection Direction
 			}
 		}
 
+		kl1 = nlow+1;
+
 
 		for(int n = nhigh-1; n > nlow; n--)
 		{
@@ -441,7 +443,7 @@ BOOL Is_FengXing_Ok_NewOpen(KLine* ks, int nlow, int nhigh, KDirection Direction
 				break;
 			}
 		}
-
+		kh1 = nlow+1;
 
 		for(int n = nhigh-1; n > nlow; n--)
 		{
@@ -1771,7 +1773,7 @@ int Te_Zheng_XuLie_Meger_For_FengXing(Bi_Line *Bl, int nStartk, int nLen, Bi_Lin
 	memcpy(BlxOut, Bl, sizeof(Bi_Line)*nLen);
 
 
-	KDirection Directionxx = NODIRECTION;
+	KDirection Directionxx = Bl[nStartk].Bi_Direction;
 
 	Bi_Line Temp = BlxOut[nStartk+1];
 
@@ -2194,6 +2196,14 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 								//因为是向下的方向，所以直接找最低的笔，在看看是否能够成为一个
 								//到这里已经有拐点出现了，说明拐点有可能形成一个线段，
 								//有两种情况，
+								int d = k;
+								for(; nStartk+2*d+1 < nLen; d++)
+								{
+									if(BlxOut[nStartk+2*d+1].PointHigh.fVal > BlxOut[nStartk+2*k+1].PointHigh.fVal)
+									{
+										k = d;
+									}
+								}
 								if(BlxOut[nStartk+2*k+1].PointHigh.fVal > BlxOut[nStartk].PointHigh.fVal)
 								{
 									//已经形成线段线段
@@ -2432,6 +2442,14 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 								//因为是向下的方向，所以直接找最低的笔，在看看是否能够成为一个
 								//到这里已经有拐点出现了，说明拐点有可能形成一个线段，
 								//有两种情况，
+								int d = k;
+								for(; nStartk+2*d+1 < nLen; d++)
+								{
+									if(BlxOut[nStartk+2*d+1].PointLow.fVal < BlxOut[nStartk+2*k+1].PointLow.fVal)
+									{
+										k = d;
+									}
+								}
 								if(BlxOut[nStartk+2*k+1].PointLow.fVal < BlxOut[nStartk].PointLow.fVal)
 								{
 									//已经形成线段线段
