@@ -665,18 +665,25 @@ BOOL Is_FengXing_Ok(KLine* ks, int nlow, int nhigh, KDirection Direction)
 //特殊处理函数：如果是分型的一笔破坏了顶底之间的关系这个时候需要单独来处理
 void SpecHandleUp(KLine* ks, int nlow, int nhigh)
 {
+	if(nhigh - nlow < 20)
+	{
+		//注意，这个是一个脑门值，也就是这超过了20个k线才考虑
+		return ;
+	}
+
 	int kl1 = 0; //底分型的高一点
 	int kh1 = 0; //顶分型的低一点
 
-	for(int n = nlow+1; n < nhigh; n++)
-	{
-		if(ks[n].Ext.nMegre != -1)
-		{
-			kl1 = n;
-			break;
-		}
-	}
+	//for(int n = nlow+1; n < nhigh; n++)
+	//{
+	//	if(ks[n].Ext.nMegre != -1)
+	//	{
+	//		kl1 = n;
+	//		break;
+	//	}
+	//}
 
+	kl1 = nlow+1;
 
 	for(int n = nhigh-1; n > nlow; n--)
 	{
@@ -690,7 +697,8 @@ void SpecHandleUp(KLine* ks, int nlow, int nhigh)
 	//如果出现kl1大于kh1的时候做特殊处理
 	if(ks[kl1].high >= ks[kh1].high)
 	{
-		
+		//1,先找出最低点
+
 	}
 }
 
@@ -711,6 +719,8 @@ BOOL Is_FengXing_Ok_NewOpen(KLine* ks, int nlow, int nhigh, KDirection Direction
 				break;
 			}
 		}
+
+		kl1 = nlow+1;
 
 
 		for(int n = nhigh-1; n > nlow; n--)
@@ -746,8 +756,8 @@ BOOL Is_FengXing_Ok_NewOpen(KLine* ks, int nlow, int nhigh, KDirection Direction
 				break;
 			}
 		}
-
-
+		kh1 = nlow+1;
+	
 		for(int n = nhigh-1; n > nlow; n--)
 		{
 			if(ks[n].Ext.nMegre != -1)
@@ -1585,16 +1595,16 @@ void TestPlugin3(int DataLen,float* Out,float* High,float* Low, float* TIME/*flo
 		KLine curr_k=ks[i];
 		KLine last=ks[i-1];
 
-		if(curr_k.high >= 13.029 && 
-			curr_k.high < 13.031 &&
-			curr_k.low >= 12.949   &&
-			curr_k.low <  12.951)
+		if(curr_k.high >= 28.329 && 
+			curr_k.high < 28.331 &&
+			curr_k.low >= 27.469   &&
+			curr_k.low <  27.471)
 		{
 
-		if(ks[i+1].high >= 13.149 && 
-			ks[i+1].high < 13.151 &&
-			ks[i+1].low >= 13.019   &&
-			ks[i+1].low <  13.021)
+		if(ks[i+1].high >= 28.239 && 
+			ks[i+1].high < 28.241 &&
+			ks[i+1].low >= 27.929   &&
+			ks[i+1].low <  27.931)
 			{
 				if(IsDebuggerPresent() == TRUE)
 				{
@@ -2090,7 +2100,7 @@ int Te_Zheng_XuLie_Meger_For_FengXing(Bi_Line *Bl, int nStartk, int nLen, Bi_Lin
 	memcpy(BlxOut, Bl, sizeof(Bi_Line)*nLen);
 
 
-	KDirection Directionxx = NODIRECTION;
+	KDirection Directionxx = Bl[nStartk].Bi_Direction;
 
 	Bi_Line Temp = BlxOut[nStartk+1];
 
@@ -2443,6 +2453,14 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 								//因为是向下的方向，所以直接找最低的笔，在看看是否能够成为一个
 								//到这里已经有拐点出现了，说明拐点有可能形成一个线段，
 								//有两种情况，
+								int d = k;
+								for(; nStartk+2*d+1 < nLen; d++)
+								{
+									if(BlxOut[nStartk+2*d+1].PointHigh.fVal > BlxOut[nStartk+2*k+1].PointHigh.fVal)
+									{
+										k = d;
+									}
+								}
 								if(BlxOut[nStartk+2*k+1].PointHigh.fVal > BlxOut[nStartk].PointHigh.fVal)
 								{
 									//已经形成线段线段
@@ -2681,6 +2699,14 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 								//因为是向下的方向，所以直接找最低的笔，在看看是否能够成为一个
 								//到这里已经有拐点出现了，说明拐点有可能形成一个线段，
 								//有两种情况，
+								int d = k;
+								for(; nStartk+2*d+1 < nLen; d++)
+								{
+									if(BlxOut[nStartk+2*d+1].PointLow.fVal < BlxOut[nStartk+2*k+1].PointLow.fVal)
+									{
+										k = d;
+									}
+								}
 								if(BlxOut[nStartk+2*k+1].PointLow.fVal < BlxOut[nStartk].PointLow.fVal)
 								{
 									//已经形成线段线段
