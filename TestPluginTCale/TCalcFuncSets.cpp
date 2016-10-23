@@ -10,7 +10,7 @@ using namespace std;
 #define TMPFILE "D:\\tdx_tmp.txt"
 #define LOGMAIN "D:\\log_main.txt"
 
-  
+
 
 
 enum KDirection
@@ -2160,7 +2160,7 @@ int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 	Bi_Line *BlxOut = new Bi_Line[nLen];;
 	Te_Zheng_XuLie_Meger_For_FengXing(Bl, nStartk, nLen, BlxOut);
 
-	KDirection nDirectxx = NODIRECTION;
+	KDirection nDirectxx = Bl[nStartk].Bi_Direction;
 
 	if(DOWN == nDirect)//方向向下，找出顶分型
 	{
@@ -2181,13 +2181,12 @@ int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 				KDirection Direct = isUp_XianDuan(Temp, BlxOut[nStartk + 2*k+1]);
 				if(nDirectxx == NODIRECTION)
 				{
-					nDirectxx = Direct;
+					//nDirectxx = Direct;
 				}	
 				else if(nDirectxx == DOWN)
 				{
 					if(Direct == UP)
 					{
-						//delete BlxOut;
 						//return nStartk + 2*k-1;
 						if(BlxOut[nStartk + 2*k-1].nMeger != -1)
 						{
@@ -2212,7 +2211,6 @@ int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 				{
 					;
 				}
-
 				if(Direct != NODIRECTION)
 				{
 					nDirectxx = Direct;
@@ -2253,7 +2251,6 @@ int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 					{
 						if(Direct == DOWN)
 						{
-							//delete BlxOut;
 							//return nStartk + 2*k-1;
 							if(BlxOut[nStartk + 2*k-1].nMeger != -1)
 							{
@@ -2271,13 +2268,14 @@ int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 									}
 								}
 							}
+
 						}
 					}
-
 					if(Direct != NODIRECTION)
 					{
 						nDirectxx = Direct;
 					}
+
 					Temp = BlxOut[nStartk + 2*k+1];
 				}
 			}
@@ -2392,7 +2390,7 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 								int j = k+1;
 								//for (int j = nStartk+2*k+1; j <= npos; j++)
 								BOOL bFlagRet = FALSE;
-								for (; nStartk+2*j <= npos; j++)
+								for (; nStartk+2*j < npos; j++)
 								{
 									//如果有点低于某个笔的点低于拐点的前一个点，也能构成
 									if(Bl[nStartk+2*j].PointHigh.fVal > Bl[nStartk+2*k+1].PointHigh.fVal)
@@ -2501,7 +2499,7 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 					{
 						Temp = BlxOut[nStartk+2*k+3];
 					}
-					
+
 				}
 				else
 				{
@@ -2568,7 +2566,7 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 		Bi_Line Temp = BlxOut[nStartk+1];
 		for(int k = 0; nStartk+2*k+3 < nLen; k++)
 		{
-			
+
 			//if(/*BlxOut[nStartk+2*k+3].nMeger != -1 &&*/ BlxOut[nStartk+2*k+3].nMegerx2 == 0)
 			{
 				//先找到一个特征序列的一个拐点，让判断是是不是满足条件1或者2
@@ -2642,7 +2640,7 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 								int j = k+1;
 								//for (int j = nStartk+2*k+1; j <= npos; j++)
 								BOOL bFlagRet = FALSE;
-								for (; nStartk+2*j <= npos; j++)
+								for (; nStartk+2*j < npos; j++)
 								{
 									//如果有点低于某个笔的点低于拐点的前一个点，也能构成
 									if(Bl[nStartk+2*j].PointLow.fVal < Bl[nStartk+2*k+1].PointLow.fVal)
@@ -2749,7 +2747,7 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 					{
 						Temp = BlxOut[nStartk+2*k+3];
 					}
-					
+
 				}
 				else
 				{
