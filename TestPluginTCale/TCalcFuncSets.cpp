@@ -853,7 +853,7 @@ BOOL bIsOne_Open_Up_NewOpen(KLine* ks, int nlow, int nhigh)
 
 
 	//先进行分型判断
-	if(Is_FengXing_Ok_NewOpen_ZuiGaoZuiDi(ks,  nlow,  nhigh, UP) == FALSE)
+	if(Is_FengXing_Ok_NewOpen(ks,  nlow,  nhigh, UP) == FALSE)
 	{
 
 		//补锅：如果有一根k线太过分的话，就要这个k线见鬼去吧，
