@@ -703,6 +703,70 @@ void SpecHandleUp(KLine* ks, int nlow, int nhigh)
 }
 
 
+
+//首先进行2个分型进行判断，有时候分型不ok也不能算一笔
+BOOL Is_FengXing_Ok_NewOpen_ZuiGaoZuiDi(KLine* ks, int nlow, int nhigh, KDirection Direction)
+{
+	if(Direction == UP)
+	{
+		int kl1 = 0; //底分型的高一点
+		int kh1 = 0; //顶分型的低一点
+
+		kl1 = nlow+1;
+
+		for(int n = nhigh-1; n > nlow; n--)
+		{
+			if(ks[n].Ext.nMegre != -1)
+			{
+				kh1 = n;
+				break;
+			}
+		}
+
+		for(int n = kl1; n <= kh1; n++)
+		{
+			if(ks[n].high >= ks[nhigh].high || ks[n].low <= ks[nlow].low)
+			{
+				return FALSE;
+			}
+		}
+
+		return TRUE;
+
+	}
+	else
+	{
+		//方向是向下的
+		int kl1 = 0; //底分型的高一点
+		int kh1 = 0; //顶分型的低一点
+
+
+		kh1 = nlow+1;
+
+		for(int n = nhigh-1; n > nlow; n--)
+		{
+			if(ks[n].Ext.nMegre != -1)
+			{
+				kl1 = n;
+				break;
+			}
+		}
+
+		for(int n = kh1; n <= kl1; n++)
+		{
+			if(ks[n].high >= ks[nhigh].high || ks[n].low <= ks[nlow].low)
+			{
+				return FALSE;
+			}
+		}
+
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+
 //首先进行2个分型进行判断，有时候分型不ok也不能算一笔
 BOOL Is_FengXing_Ok_NewOpen(KLine* ks, int nlow, int nhigh, KDirection Direction)
 {
@@ -789,7 +853,7 @@ BOOL bIsOne_Open_Up_NewOpen(KLine* ks, int nlow, int nhigh)
 
 
 	//先进行分型判断
-	if(Is_FengXing_Ok_NewOpen(ks,  nlow,  nhigh, UP) == FALSE)
+	if(Is_FengXing_Ok_NewOpen_ZuiGaoZuiDi(ks,  nlow,  nhigh, UP) == FALSE)
 	{
 
 		//补锅：如果有一根k线太过分的话，就要这个k线见鬼去吧，
@@ -2160,7 +2224,7 @@ int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 	Bi_Line *BlxOut = new Bi_Line[nLen];;
 	Te_Zheng_XuLie_Meger_For_FengXing(Bl, nStartk, nLen, BlxOut);
 
-	KDirection nDirectxx = Bl[nStartk].Bi_Direction;
+	KDirection nDirectxx = NODIRECTION;
 
 	if(DOWN == nDirect)//方向向下，找出顶分型
 	{
@@ -2181,7 +2245,7 @@ int Is_XianDuan_FenXing(Bi_Line *Bl, int nStartk, int nLen, KDirection nDirect)
 				KDirection Direct = isUp_XianDuan(Temp, BlxOut[nStartk + 2*k+1]);
 				if(nDirectxx == NODIRECTION)
 				{
-					//nDirectxx = Direct;
+					nDirectxx = Direct;
 				}	
 				else if(nDirectxx == DOWN)
 				{
