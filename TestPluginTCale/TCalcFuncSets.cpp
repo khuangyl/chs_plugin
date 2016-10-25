@@ -95,6 +95,9 @@ int      g_nBlSize;
 int g_nSize = 0;
 KLine* g_tgKs = NULL;
 
+int g_orgDataLen = 0;
+KLine* g_orgKs = NULL;
+
 void AnalyXD(Bi_Line *Bl, int nLen);
 
 //determine two Neighboring k lines is included or not, 
@@ -903,10 +906,14 @@ BOOL bIsOne_Open_Up_NewOpen(KLine* ks, int nlow, int nhigh)
 	if(isUp(ks[kl1], ks[kh1]) == UP)
 	{
 		//顺便在这里做一下缺口的处理，如果ks[nhigh+1]和ks[nhigh]有个大缺口，即已经构成了一笔，的情况下
-		if(ks[nhigh+1].high < ks[nlow].low)
+		if(g_orgKs[nhigh+1].high < g_orgKs[nlow].low)
 		{
-			ks[nhigh+1].prop = -1;
+			if((g_orgKs[nhigh].low - g_orgKs[nhigh+1].high) > (g_orgKs[nhigh].high - g_orgKs[nlow].low))
+			{
+				ks[nhigh+1].prop = -1;
+			}
 		}
+		
 		return TRUE;
 	}
 	
@@ -965,10 +972,14 @@ BOOL bIsOne_Open_Down_NewOpen(KLine* ks, int nlow, int nhigh)
 	if(isUp(ks[kh1], ks[kl1]) == DOWN)
 	{
 		//顺便在这里做一下缺口的处理，如果ks[nhigh+1]和ks[nhigh]有个大缺口，即已经构成了一笔，的情况下
-		if(ks[nhigh+1].low > ks[nlow].high)
+		if(g_orgKs[nhigh+1].low > g_orgKs[nlow].high)
 		{
-			ks[nhigh+1].prop = 1;
+			if((g_orgKs[nhigh+1].low - g_orgKs[nhigh].high) > (g_orgKs[nlow].high - g_orgKs[nhigh].low))
+			{
+				ks[nhigh+1].prop = 1;
+			}
 		}
+		
 		return TRUE;
 	}
 	
@@ -1447,9 +1458,12 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 						{
 							if(ks[kkk].prop == -1)
 							{
-								if(ks[i+1].high < ks[kkk].low)
+								if(g_orgKs[i+1].high < g_orgKs[kkk].low)
 								{
-									ks[i+1].prop = -1;
+									if((g_orgKs[i].low - g_orgKs[i+1].high) > (g_orgKs[i].high - g_orgKs[kkk].low))
+									{
+										ks[i+1].prop = -1;
+									}
 								}
 								break;
 							}
@@ -1537,11 +1551,14 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 						//先找到底分型
 						for (int kkk = n; kkk > 0; kkk--)
 						{
-							if(ks[kkk].prop == 1)
+							if(ks[kkk].prop == 1)  //这个时候是kkk的顶分型
 							{
-								if(ks[i+1].low > ks[kkk].high)
+								if(g_orgKs[i+1].low > g_orgKs[kkk].high)
 								{
-									ks[i+1].prop = 1;
+									if((g_orgKs[i+1].low - g_orgKs[i].high) > (g_orgKs[kkk].high - g_orgKs[i].low))
+									{
+										ks[i+1].prop = 1;
+									}
 								}
 								break;
 							}
@@ -1628,6 +1645,8 @@ void Handle_QueKou(KLine* ks, int DataLen)
 	}
 }
 
+
+
 void TestPlugin3(int DataLen,float* Out,float* High,float* Low, float* TIME/*float* Close*/)
 {
 	OutputDebugStringA("[chs] TestPlugin3 ");
@@ -1651,6 +1670,21 @@ void TestPlugin3(int DataLen,float* Out,float* High,float* Low, float* TIME/*flo
 		ZeroMemory(&ks[i].Ext, sizeof(klineExtern));//先清0
 	};
 
+	//k线数据拷贝
+	if(DataLen > g_orgDataLen)
+	{
+		if(g_orgKs)
+		{
+			//KLine* g_tgKs = new KLine[DataLen]
+			delete g_orgKs;
+		}
+
+		g_orgKs = new KLine[DataLen];
+		
+	}
+	g_orgDataLen = DataLen;
+	memcpy((char*)g_orgKs, (char*)ks, DataLen*sizeof(KLine));
+
 	//对ks数组数据进行分型处理
 	tmp_k = ks[0];
 	
@@ -1659,16 +1693,16 @@ void TestPlugin3(int DataLen,float* Out,float* High,float* Low, float* TIME/*flo
 		KLine curr_k=ks[i];
 		KLine last=ks[i-1];
 
-		if(curr_k.high >= 28.329 && 
-			curr_k.high < 28.331 &&
-			curr_k.low >= 27.469   &&
-			curr_k.low <  27.471)
+		if(curr_k.high >= 58.699 && 
+			curr_k.high < 58.701 &&
+			curr_k.low >= 57.709   &&
+			curr_k.low <  57.711)
 		{
 
-		if(ks[i+1].high >= 28.239 && 
-			ks[i+1].high < 28.241 &&
-			ks[i+1].low >= 27.929   &&
-			ks[i+1].low <  27.931)
+		if(ks[i+1].high >= 58.009 && 
+			ks[i+1].high < 59.001 &&
+			ks[i+1].low >= 58.479   &&
+			ks[i+1].low <  58.481)
 			{
 				if(IsDebuggerPresent() == TRUE)
 				{
