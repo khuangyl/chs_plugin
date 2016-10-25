@@ -2876,6 +2876,529 @@ int Lookup_Next_XianDuan(Bi_Line *Bl, int nStartk, int nLen)
 	return 0;
 }
 
+
+int Lookup_Next_XianDuan_EX(Bi_Line *Bl, int nStartk, int nLen)
+{
+	BOOL bFlagGuaiDian = FALSE;
+	//画起点
+	//Draw_StartPoint( Bl,  nStartk);
+
+	Bi_Line *BlxOut = new Bi_Line[nLen];
+	//Te_Zheng_XuLie_Meger_For_New(Bl, nStartk, nLen, BlxOut);
+	Te_Zheng_XuLie_Meger(Bl, nStartk, nLen, BlxOut);
+
+	if(Bl[nStartk].Bi_Direction == UP)
+	{
+		Bi_Line Temp = BlxOut[nStartk+1];
+		for(int k = 0; nStartk+2*k+3 < nLen; k++)
+		{
+			//if(/*BlxOut[nStartk+2*k+3].nMeger != 1 &&*/ BlxOut[nStartk+2*k+3].nMegerx2 == 0)
+			{
+				//先找到一个特征序列的一个拐点，让判断是是不是满足条件1或者2
+				if(BlxOut[nStartk+2*k+3].PointHigh.fVal < Temp.PointHigh.fVal)
+				{
+					bFlagGuaiDian = TRUE;
+
+					//DrawGuaiDian(BlxOut,  nStartk,  k);//画拐点的笔
+
+					//满足拐点的，说明已经出现了第一个或者第二个条件了
+					//判断是第一个情况或者第二个情况
+					//2*k+1的低点 < 2*k-1的高点,就是第一种情况，出现，这个时候不要找特征序列，而是判断后面的是不是能够形成一个线段
+					//这里应该不要考虑2*k+1, 2*k-1的Meger特性了吧，还真需要考虑2*k-1的特性
+					//int np = Get2k_dec_1(BlxOut, nStartk+2*k+1);
+					int np = Get_GuaiDian_Before_Bi(BlxOut, nStartk+2*k+1, UP, nStartk);
+
+					//DrawGuaiDian_Before_bi(BlxOut,  nStartk, np);//画拐点前的一笔
+
+					//还有找到真正的拐点笔
+					int nreal_gd = Get_GuaiDian_Real(BlxOut, nStartk+2*k+1, UP, nStartk);//拐点前的一笔
+
+					if(np)
+					{
+						if(BlxOut[nreal_gd].PointLow.fVal <= BlxOut[np].PointHigh.fVal)
+						{
+							int nRet = 0;
+
+							//画出线段之前---要先判断是否有meger,因为是左包含原则，所以要找出和nStartk+2*k+1 meger的最前面的一个笔
+							//然后这个笔就是该线段最后一笔
+							if(BlxOut[nStartk+2*k+1].nMeger != 0)
+							{
+								//确实证实了是meger
+								int n_no_meger_bi = Get_No_Meger_Bi(BlxOut, nStartk+2*k+1);
+								nRet = n_no_meger_bi;
+
+
+								//还要处理包含的问题，就是处理Bl的问题
+								Bl[nStartk+2*k+1].PointHigh.nIndex = Bl[n_no_meger_bi].PointHigh.nIndex;
+								Bl[nStartk+2*k+1].PointHigh.fVal = Bl[n_no_meger_bi].PointHigh.fVal;
+
+								//还有处理显示的数据
+								//vecData[nStartk+2*k+1].pt1.x = vecData[n_no_meger_bi].pt1.x;
+								//vecData[nStartk+2*k+1].pt1.y = vecData[n_no_meger_bi].pt1.y;
+
+							}	
+							else
+							{
+								nRet = nStartk+2*k+1;
+							}
+
+
+							//Draw_QueDing_Xianduan_First_UP(BlxOut, nStartk, nreal_gd);//画第一情况的笔
+
+							//确定是第一种情况的出现了，这个时候假设2*k+1的高点为线段的起点，找到向下的线段，再一次找到拐点就算是一个线段的完成				
+							Bl[nreal_gd].XianDuan_nprop = 1;
+							delete BlxOut;
+							return nStartk+2*k+1;
+
+						}
+						else
+						{
+							//这个是第二种情况下，也就是一笔并没有破坏了。
+							//假设2*k+1为起点，如果找到底分型的特征序列，就算是完成了一个线段的开始
+							//Is_XianDuan_FenXing这个函数返回底分型最低的位置的k
+							int npos = Is_XianDuan_FenXing(BlxOut, nreal_gd, nLen, DOWN);
+							if(npos)
+							{
+								//Draw_Second_FengXing(BlxOut, npos);//画出第二种情况的分型
+
+								//找到底分型了，然后看看这个底分型和拐点之间是否已经是一个线段
+								//判断方法，拐点间到npos如果有笔高过拐点，那说这个拐点不是一个线段的点，需要用用高一点的点来继续
+								int j = k+1;
+								//for (int j = nStartk+2*k+1; j <= npos; j++)
+								BOOL bFlagRet = FALSE;
+								for (; nStartk+2*j < npos; j++)
+								{
+									//如果有点低于某个笔的点低于拐点的前一个点，也能构成
+									if(Bl[nStartk+2*j].PointHigh.fVal > Bl[nreal_gd].PointHigh.fVal)
+									{
+										k = j-1;
+										bFlagRet = TRUE;
+										Temp = BlxOut[nStartk+2*k+3];
+										break;
+									}
+
+								}
+
+								if( bFlagRet == FALSE)
+								{
+									//已经是确定形成了
+									//Draw_QueDing_Xianduan_Second_UP_EX_New(BlxOut,  nStartk,  nreal_gd);
+
+									if(BlxOut[nStartk+2*k+1].nMeger != 0)
+									{
+										//确实证实了是meger
+										int n_no_meger_bi = Get_No_Meger_Bi(BlxOut, nStartk+2*k+1);
+
+										//还要处理包含的问题，就是处理Bl的问题
+										Bl[nStartk+2*k+1].PointHigh.nIndex = Bl[n_no_meger_bi].PointHigh.nIndex;
+										Bl[nStartk+2*k+1].PointHigh.fVal = Bl[n_no_meger_bi].PointHigh.fVal;
+
+										//还有处理显示的数据
+										//vecData[nStartk+2*k+1].pt1.x = vecData[n_no_meger_bi].pt1.x;
+										//vecData[nStartk+2*k+1].pt1.y = vecData[n_no_meger_bi].pt1.y;
+
+									}
+
+									Bl[nreal_gd].XianDuan_nprop = 1;
+									delete BlxOut;
+									return nStartk+2*k+1;
+
+								}
+								else
+								{
+									//::MessageBoxA(m_hWnd, "找到分型也不能形成线段", NULL, MB_OK);
+									Temp = BlxOut[nStartk+2*k+3];
+								}
+
+							}
+							else
+							{
+								//::MessageBoxA(m_hWnd, "找不到第二种情况的分型", NULL, MB_OK);
+								//到这里有可能说明是快结束了，应该要用结束的情况来分析
+								//因为是向下的方向，所以直接找最低的笔，在看看是否能够成为一个
+								//到这里已经有拐点出现了，说明拐点有可能形成一个线段，
+								//有两种情况，
+								int d = k;
+								for(; nStartk+2*d+1 < nLen; d++)
+								{
+									if(BlxOut[nStartk+2*d+1].PointHigh.fVal > BlxOut[nStartk+2*k+1].PointHigh.fVal)
+									{
+										k = d;
+									}
+								}
+
+								if(BlxOut[nStartk+2*k+1].PointHigh.fVal > BlxOut[nStartk].PointHigh.fVal)
+								{
+									//已经形成线段线段
+									int  nRet = 0;
+									if(BlxOut[nStartk+2*k+1].nMeger != 0)
+									{
+										//确实证实了是meger
+										int n_no_meger_bi = Get_No_Meger_Bi(BlxOut, nStartk+2*k+1);
+										nRet = n_no_meger_bi;
+
+										//还要处理包含的问题，就是处理Bl的问题
+										Bl[nStartk+2*k+1].PointHigh.nIndex = Bl[n_no_meger_bi].PointHigh.nIndex;
+										Bl[nStartk+2*k+1].PointHigh.fVal = Bl[n_no_meger_bi].PointHigh.fVal;
+
+										//还有处理显示的数据
+										//vecData[nStartk+2*k+1].pt1.x = vecData[n_no_meger_bi].pt1.x;
+										//vecData[nStartk+2*k+1].pt1.y = vecData[n_no_meger_bi].pt1.y;
+
+									}
+									else
+									{
+										nRet = nStartk+2*k+1;
+									}
+
+									//Draw_QueDing_Xianduan_First_UP(BlxOut, nStartk, nRet);//画第一情况的笔
+
+									Bl[nStartk+2*k+1].XianDuan_nprop = 1;
+									delete BlxOut;
+									return nStartk+2*k+1;
+								}
+							}
+						}
+
+					}
+					else
+					{
+						Temp = BlxOut[nStartk+2*k+3];
+					}
+
+				}
+				else
+				{
+					Temp = BlxOut[nStartk+2*k+3];
+				}
+			}
+
+
+		}
+
+		// 没有找到拐点，也就是一条直线，
+		if(bFlagGuaiDian  == FALSE)
+		{		
+			int k = 1;
+			float Vfloat = Bl[nStartk].PointHigh.fVal;
+			int n = 0;
+			while(nStartk+k < nLen)
+			{
+				if( Vfloat <  Bl[nStartk+k].PointHigh.fVal && Bl[nStartk+k].Bi_Direction == UP)
+				{
+					n = k;
+					Vfloat = Bl[nStartk+k].PointHigh.fVal;
+				}
+				k++;
+			}
+			k--;
+			if(Vfloat >  Bl[nStartk].PointHigh.fVal && n >=2 )
+			{
+				{
+					//Draw_QueDing_Xianduan_First_UP(Bl, nStartk, nStartk+n);//画第一情况的笔
+					Bl[nStartk+n].XianDuan_nprop = 1;
+				}
+			}
+		}
+		else
+		{
+			int k = 1;
+			float Vfloat = Bl[nStartk].PointHigh.fVal;
+			int n = 0;
+			while(nStartk+k < nLen)
+			{
+				if( Vfloat <  Bl[nStartk+k].PointHigh.fVal && Bl[nStartk+k].Bi_Direction == UP)
+				{
+					n = k;
+					Vfloat = Bl[nStartk+k].PointHigh.fVal;
+				}
+				k++;
+			}
+			k--;
+			if(Vfloat >  Bl[nStartk].PointHigh.fVal && n >=2 )
+			{
+				{
+					//Draw_QueDing_Xianduan_First_UP(Bl, nStartk, nStartk+n);//画第一情况的笔
+					Bl[nStartk+n].XianDuan_nprop = 1;
+				}
+			}
+		}
+	}
+
+
+	/*-----------------------------------------------------------------------*/
+	if(Bl[nStartk].Bi_Direction == DOWN)
+	{
+		Bi_Line Temp = BlxOut[nStartk+1];
+		for(int k = 0; nStartk+2*k+3 < nLen; k++)
+		{
+			//if(/*BlxOut[nStartk+2*k+3].nMeger != 1 &&*/ BlxOut[nStartk+2*k+3].nMegerx2 == 0)
+			{
+				//先找到一个特征序列的一个拐点，让判断是是不是满足条件1或者2
+				if(BlxOut[nStartk+2*k+3].PointLow.fVal > Temp.PointLow.fVal)
+				{
+
+
+					bFlagGuaiDian = TRUE;
+					//DrawGuaiDian(BlxOut,  nStartk,  k);//画拐点的笔
+
+					//满足拐点的，说明已经出现了第一个或者第二个条件了
+					//判断是第一个情况或者第二个情况
+					//2*k+1的低点 < 2*k-1的高点,就是第一种情况，出现，这个时候不要找特征序列，而是判断后面的是不是能够形成一个线段
+					//这里应该不要考虑2*k+1, 2*k-1的Meger特性了吧，还真需要考虑2*k-1的特性
+					//int np = Get2k_dec_1(BlxOut, nStartk+2*k+1);
+					int np = Get_GuaiDian_Before_Bi(BlxOut, nStartk+2*k+1, DOWN, nStartk);//拐点前的一笔
+
+					//DrawGuaiDian_Before_bi(BlxOut,  nStartk, np);//画拐点前的一笔
+
+					//还有找到真正的拐点笔
+					int nreal_gd = Get_GuaiDian_Real(BlxOut, nStartk+2*k+1, DOWN, nStartk);//
+
+					if(np)
+					{
+						if(BlxOut[nreal_gd].PointHigh.fVal >= BlxOut[np].PointLow.fVal)//是否满足第一种情况//chsgggai
+						{
+							int nRet = 0;
+
+							//画出线段之前---要先判断是否有meger,因为是左包含原则，所以要找出和nStartk+2*k+1 meger的最前面的一个笔
+							//然后这个笔就是该线段最后一笔
+							if(BlxOut[nStartk+2*k+1].nMeger != 0)
+							{
+								//确实证实了是meger
+								int n_no_meger_bi = Get_No_Meger_Bi(BlxOut, nStartk+2*k+1);
+								nRet = n_no_meger_bi;
+
+
+								//还要处理包含的问题，就是处理Bl的问题
+								Bl[nStartk+2*k+1].PointLow.nIndex = Bl[n_no_meger_bi].PointLow.nIndex;
+								Bl[nStartk+2*k+1].PointLow.fVal = Bl[n_no_meger_bi].PointLow.fVal;
+
+								//还有处理显示的数据
+								//vecData[nStartk+2*k+1].pt1.x = vecData[n_no_meger_bi].pt1.x;
+								//vecData[nStartk+2*k+1].pt1.y = vecData[n_no_meger_bi].pt1.y;
+
+							}	
+							else
+							{
+								nRet = nStartk+2*k+1;
+							}
+
+							Bl[nreal_gd].XianDuan_nprop = -1;//chsgggai
+
+							//Draw_QueDing_Xianduan_First_DOWN(BlxOut, nStartk, nreal_gd);//画第一情况的笔//chsgggai
+
+							//确定是第一种情况的出现了，这个时候假设2*k+1的高点为线段的起点，找到向下的线段，再一次找到拐点就算是一个线段的完成				
+							delete BlxOut;
+							return nStartk+2*k+1;
+
+						}
+						else
+						{
+							//这个是第二种情况下，也就是一笔并没有破坏了。
+							//假设2*k+1为起点，如果找到底分型的特征序列，就算是完成了一个线段的开始
+							//Is_XianDuan_FenXing这个函数返回底分型最低的位置的k
+							int npos = Is_XianDuan_FenXing(BlxOut, nreal_gd, nLen, UP);//chsgggai
+							if(npos)
+							{
+								//Draw_Second_FengXing(Bl, npos);//画出第二种情况的分型
+
+								//找到底分型了，然后看看这个底分型和拐点之间是否已经是一个线段
+								//判断方法，拐点间到npos如果有笔高过拐点，那说这个拐点不是一个线段的点，需要用用高一点的点来继续
+								int j = k+1;
+								//for (int j = nStartk+2*k+1; j <= npos; j++)
+								BOOL bFlagRet = FALSE;
+								for (; nStartk+2*j <= npos; j++)//chsgggai
+								{
+									//如果有点低于某个笔的点低于拐点的前一个点，也能构成
+									if(Bl[nStartk+2*j].PointLow.fVal < Bl[nreal_gd].PointLow.fVal)//chsgggai
+									{
+										k = j-1;
+										bFlagRet = TRUE;
+										Temp = BlxOut[nStartk+2*k+3];
+										break;
+									}
+
+								}
+
+								if( bFlagRet == FALSE)
+								{
+									//换新方法，不用再判断合并的事
+									//Draw_QueDing_Xianduan_Second_DWON_EX_New(BlxOut,  nStartk,  nreal_gd);//chsgggai
+									Bl[nreal_gd].XianDuan_nprop = -1;//chsgggai
+									delete BlxOut;
+									if(BlxOut[nStartk+2*k+1].nMeger != 0)
+									{
+										//确实证实了是meger
+										int n_no_meger_bi = Get_No_Meger_Bi(BlxOut, nStartk+2*k+1);
+
+										//还要处理包含的问题，就是处理Bl的问题
+										Bl[nStartk+2*k+1].PointLow.nIndex = Bl[n_no_meger_bi].PointLow.nIndex;
+										Bl[nStartk+2*k+1].PointLow.fVal = Bl[n_no_meger_bi].PointLow.fVal;
+
+										//还有处理显示的数据
+										//vecData[nStartk+2*k+1].pt1.x = vecData[n_no_meger_bi].pt1.x;
+										//vecData[nStartk+2*k+1].pt1.y = vecData[n_no_meger_bi].pt1.y;
+
+									}	
+									return nStartk+2*k+1;
+
+									//已经确定能形成线段了，需要做的就是k是否有meger的标志，找到没有标志的新k，然后该k就是要找的
+									if(BlxOut[nStartk+2*k+1].nMeger)
+									{
+										while(1)
+										{
+											k--;
+
+											if(BlxOut[nStartk+2*k+1].nMeger != -1)
+											{
+												k++;
+												//Draw_QueDing_Xianduan_Second_DWON(BlxOut,  nStartk,  k);//画第二种线段的形成
+												//也就是能形成线段
+												Bl[nStartk+2*k+1].XianDuan_nprop = -1;
+												delete BlxOut;
+												return nStartk+2*k+1;
+											}
+										}
+									}
+									else
+									{
+										//Draw_QueDing_Xianduan_Second_DWON(Bl,  nStartk,  k);//画第二种线段的形成
+										//也就是能形成线段
+										Bl[nStartk+2*k+1].XianDuan_nprop = -1;
+										delete BlxOut;
+										return nStartk+2*k+1;
+									}
+
+								}
+								else
+								{
+									//::MessageBoxA(m_hWnd, "找到分型也不能形成线段", NULL, MB_OK);
+									Temp = BlxOut[nStartk+2*k+3];
+								}
+
+							}
+							else
+							{
+								//::MessageBoxA(m_hWnd, "找不到第二种情况的分型", NULL, MB_OK);
+								//到这里有可能说明是快结束了，应该要用结束的情况来分析
+								//因为是向下的方向，所以直接找最低的笔，在看看是否能够成为一个
+								//到这里已经有拐点出现了，说明拐点有可能形成一个线段，
+								//有两种情况，
+								int d = k;
+								for(; nStartk+2*d+1 < nLen; d++)
+								{
+									if(BlxOut[nStartk+2*d+1].PointLow.fVal < BlxOut[nStartk+2*k+1].PointLow.fVal)
+									{
+										k = d;
+									}
+								}
+
+								if(BlxOut[nStartk+2*k+1].PointLow.fVal < BlxOut[nStartk].PointLow.fVal)
+								{
+									//已经形成线段线段
+									int nRet = 0;
+									if(BlxOut[nStartk+2*k+1].nMeger != 0)
+									{
+										//确实证实了是meger
+										int n_no_meger_bi = Get_No_Meger_Bi(BlxOut, nStartk+2*k+1);
+										nRet = n_no_meger_bi;
+
+
+										//还要处理包含的问题，就是处理Bl的问题
+										Bl[nStartk+2*k+1].PointLow.nIndex = Bl[n_no_meger_bi].PointLow.nIndex;
+										Bl[nStartk+2*k+1].PointLow.fVal = Bl[n_no_meger_bi].PointLow.fVal;
+
+										//还有处理显示的数据
+										//vecData[nStartk+2*k+1].pt1.x = vecData[n_no_meger_bi].pt1.x;
+										//vecData[nStartk+2*k+1].pt1.y = vecData[n_no_meger_bi].pt1.y;
+
+									}	
+									else
+									{
+										nRet = nStartk+2*k+1;
+									}
+
+									Bl[nStartk+2*k+1].XianDuan_nprop = -1;
+
+									//Draw_QueDing_Xianduan_First_DOWN(BlxOut, nStartk, nRet);//画第一情况的笔
+
+
+									Bl[nStartk+2*k+1].XianDuan_nprop = -1;
+									delete BlxOut;
+									return nStartk+2*k+1;
+								}
+
+							}
+						}
+					}
+					else
+					{
+						Temp = BlxOut[nStartk+2*k+3];
+					}
+
+				}
+				else
+				{
+					Temp = BlxOut[nStartk+2*k+3];
+				}
+			}
+		}
+
+		// 没有找到拐点，也就是一条直线，,应该是后面的几个线段，后面的要几段数据，边界数据要做处理（这个很重要）
+		if(bFlagGuaiDian  == FALSE)
+		{
+			int k = 1;
+			float Vfloat = Bl[nStartk].PointLow.fVal;
+			int n = 0;
+			while(nStartk+k < nLen)
+			{
+				if( Vfloat >  Bl[nStartk+k].PointLow.fVal && Bl[nStartk+k].Bi_Direction == DOWN)
+				{
+					n = k;
+					Vfloat = Bl[nStartk+k].PointLow.fVal;
+				}
+				k++;
+			}
+			k--;
+			if(Vfloat <  Bl[nStartk].PointLow.fVal && n >=2 )
+			{
+				{
+					//Draw_QueDing_Xianduan_First_DOWN(Bl, nStartk, nStartk+n);//画第一情况的笔
+					Bl[nStartk+n].XianDuan_nprop = -1;
+				}
+			}
+		}
+		else
+		{
+			//假设找到拐点了，可以直接画在拐点那里为止
+			int k = 1;
+			float Vfloat = Bl[nStartk].PointLow.fVal;
+			int n = 0;
+			while(nStartk+k < nLen)
+			{
+				if( Vfloat >  Bl[nStartk+k].PointLow.fVal && Bl[nStartk+k].Bi_Direction == DOWN)
+				{
+					n = k;
+					Vfloat = Bl[nStartk+k].PointLow.fVal;
+				}
+				k++;
+			}
+			k--;
+			if(Vfloat <  Bl[nStartk].PointLow.fVal && n >=2 )
+			{
+				{
+					//Draw_QueDing_Xianduan_First_DOWN(Bl, nStartk, nStartk+n);//画第一情况的笔
+					Bl[nStartk+n].XianDuan_nprop = -1;
+				}
+			}
+		}
+	}
+
+	delete BlxOut;
+	return 0;
+}
+
+
 //线段分析函数
 void AnalyXD(Bi_Line *Bl, int nLen)
 {
@@ -2926,7 +3449,7 @@ void AnalyXD(Bi_Line *Bl, int nLen)
 	int k = i;
 	while(1)
 	{
-		k = Lookup_Next_XianDuan(Bl, k, nLen );
+		k = Lookup_Next_XianDuan_EX(Bl, k, nLen );
 		if(k == 0)
 		{
 			break;
