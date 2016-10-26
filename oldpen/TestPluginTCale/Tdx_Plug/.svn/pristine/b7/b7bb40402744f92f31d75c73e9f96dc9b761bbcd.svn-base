@@ -1,0 +1,156 @@
+// TestPluginTCale.cpp : Defines the entry point for the DLL application.
+//
+
+#include "stdafx.h"
+#include "resource.h"
+#include "TestPlugDlg.h"
+BOOL g_bStart = FALSE;
+
+CTestPlugDlg *g_pDlg = NULL;
+BOOL g_bIsCreate = FALSE;
+
+HWND g_hWnd = NULL;
+DWORD g_tid = 0;
+HANDLE g_hm = 0;
+HHOOK g_hh = 0;
+
+DWORD MyWinProc(LPVOID lpParameter)
+{
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());   
+	g_pDlg = new CTestPlugDlg;
+	g_pDlg->DoModal();
+
+	return 0;
+}
+
+LRESULT CALLBACK KeyboardProc(
+							  int code,       // hook code
+							  WPARAM wParam,  // virtual-key code
+							  LPARAM lParam   // keystroke-message information
+							  )
+{
+	static BOOL bCtrl = FALSE;
+	char szbuff[128] = {0};
+	sprintf(szbuff, "[chs] WM_KEYUP wParam = 0x%8X, lParam = 0x%8X code = %d", wParam, lParam, code);
+
+
+	AFX_MANAGE_STATE(AfxGetStaticModuleState());   
+
+	if ((wParam==VK_HOME)&&((lParam&(1<<31))==0)) 
+	{
+		if(g_pDlg == NULL && g_bIsCreate == FALSE)
+		{
+			{
+				HANDLE hhh = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)MyWinProc,NULL,0,NULL);
+				//WaitForSingleObject(g_hEvent11, INFINITE);
+				g_bIsCreate = TRUE;
+				CloseHandle(hhh);
+			}
+
+		}
+		else
+		{
+			if(g_pDlg->IsWindowVisible())
+			{
+				g_pDlg->ShowWindow(SW_HIDE);
+			}
+			else
+				g_pDlg->ShowWindow(SW_SHOWNORMAL);
+		}
+
+	}
+
+	return CallNextHookEx(g_hh,code,wParam,lParam);
+}
+
+
+
+
+BOOL CALLBACK EnumWindowsProc(  HWND hwnd, LPARAM lParam )
+{
+	DWORD dwPid = GetCurrentProcessId();
+	char szText[MAX_PATH] = {0};
+	GetWindowTextA(hwnd, szText, MAX_PATH);
+	if(strstr(szText, "中信证券至信全能版"))
+	{
+		DWORD pid = 0;
+		DWORD tid = 0;
+		tid = ::GetWindowThreadProcessId(hwnd,&pid);
+		if(pid == dwPid)
+		{
+			g_bStart = FALSE;;
+			g_hWnd = hwnd;
+			g_tid = tid;
+
+			g_hm = (HANDLE)GetModuleHandle("MyGuPiaoWaiGua.dll");
+			g_hh = SetWindowsHookEx(WH_KEYBOARD,(HOOKPROC)KeyboardProc,(HINSTANCE)g_hm, g_tid);
+
+			HANDLE hhh = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)MyWinProc,NULL,0,NULL);
+			//WaitForSingleObject(g_hEvent11, INFINITE);
+			g_bIsCreate = TRUE;
+			CloseHandle(hhh);
+
+			return FALSE;
+
+		}
+	}
+
+	return TRUE;
+
+}
+
+DWORD StartProc(LPARAM lparam)
+{
+	g_bStart = TRUE;
+	while(g_bStart)
+	{
+		Sleep(2000);
+		EnumWindows(EnumWindowsProc, NULL);
+		Sleep(5000);
+	}
+	return 0;
+}
+
+
+//
+//void SetHook()
+//{
+//	AFX_MANAGE_STATE(AfxGetStaticModuleState());   
+//
+//
+//	HANDLE hThreadx = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)StartProc, NULL, 0, NULL);
+//	CloseHandle(hThreadx);
+//
+//
+//}
+//
+//DWORD ThreadProc(LPVOID lpParameter)
+//{
+//	AFX_MANAGE_STATE(AfxGetStaticModuleState());   
+//
+//
+//	SetHook();
+//	while(1)
+//	{
+//		Sleep(2000);
+//	}
+//
+//	return 1;
+//}
+
+
+BOOL APIENTRY DllMain( HANDLE hModule, 
+                       DWORD  ul_reason_for_call, 
+                       LPVOID lpReserved
+					 )
+{
+	switch(ul_reason_for_call)
+	{
+	case DLL_PROCESS_ATTACH:
+		CreateThread(NULL, 0,(LPTHREAD_START_ROUTINE)StartProc, NULL, 0, NULL);
+		break;
+	}
+
+    return TRUE;
+}
+

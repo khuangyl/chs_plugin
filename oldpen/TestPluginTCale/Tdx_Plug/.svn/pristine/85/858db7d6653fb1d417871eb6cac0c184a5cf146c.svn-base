@@ -1,0 +1,1577 @@
+#include "stdafx.h"
+#include "TCalcFuncSets.h"
+#include <iostream>
+#include <fstream>
+#include <stdio.h>
+#include <time.h>
+
+using namespace std;
+
+#define TMPFILE "D:\\tdx_tmp.txt"
+#define LOGMAIN "D:\\log_main.txt"
+
+enum KDirection
+{
+	DOWN = -1,
+	NODIRECTION = 0,
+	UP =1
+};
+
+#define MAX(a,b)(a>b)?a:b
+#define MIN(a,b)(a>b)?b:a
+#define SET_TOPFX(a) { a.prop=1; top_k=a;}
+#define SET_BOTTOMFX(a) {a.prop=-1; bottom_k=a;}
+#define CLEAR_FX(a) {a.prop=0;}
+
+typedef struct _klineExtern
+{
+	int   nProp;		//标志，顶分或者底分标志 1 顶，-1 底
+	int   nMegre;		//合并标志 1表示被合并，0表示没有
+	float MegreHigh;	//合并后高点
+	float MegreLow;	    //合并后低点
+	int   nDirector;    //方向,和前一个比，1 向上，0，没有方向， -1 向下
+}klineExtern;
+
+
+//k line struct
+typedef struct kline
+{
+	//float open;
+	//float close;
+	float high; //high price
+	float low;  //low price
+	int index; // index the number of k line
+	float prop; // 1:up, -1: down, 0: normal
+	klineExtern Ext;
+} KLine;
+
+//determine two Neighboring k lines is included or not, 
+//1:left included, -1: right included, 0:not included
+int isIncluded(KLine kleft, KLine kright)
+{
+	if (((kleft.high>=kright.high) && (kleft.low<=kright.low))){
+		return -1;
+	}else if((kleft.high<=kright.high) && (kleft.low>=kright.low)){
+		return 1;
+	}else{
+		return 0;
+	};
+};
+
+//merge two Neighboring k lines depend on directon
+KLine kMerge(KLine kleft, KLine kright, int Direction){
+	KLine value=kright;
+	if(Direction == UP)
+	{
+		value.high = MAX(kleft.high, kright.high);
+		value.low = MAX(kleft.low, kright.low);
+	}
+	else if(Direction == DOWN)
+	{
+		value.high = MIN(kleft.high, kright.high);
+		value.low = MIN(kleft.low, kright.low);
+	};
+
+	return value;	
+};
+
+//if two Neighboring k lines is not inclued, determine the direction.
+//1: up, -1: down
+KDirection isUp(KLine kleft, KLine kright){
+	if((kleft.high>kright.high) && (kleft.low>kright.low)){
+		return DOWN;
+	}else if((kleft.high<kright.high) && (kleft.low<kright.low)){
+		return UP;
+	};
+
+	return NODIRECTION; 
+};
+
+void checkOuts(int DataLen, float* Out){
+    ofstream file;
+	file.open(TMPFILE);
+
+	for(int i=0;i<DataLen;i++){
+			file << Out[i] << "\n";
+		};
+	file.close();
+};
+
+void checkKs(int DataLen, KLine* Ks){
+	ofstream ks_file;
+	ks_file.open(TMPFILE);
+	for(int i=0;i<DataLen;i++){
+		ks_file << "index: " <<Ks[i].index << " high: " 
+				<<Ks[i].high <<" low: " <<Ks[i].low 
+				<<" prop: " <<Ks[i].prop <<"\n";
+		};
+	ks_file.close();
+};
+
+/******************************************************
+	生成的dll及相关依赖dll
+	请拷贝到通达信安装目录的T0002/dlls/下面
+	,再在公式管理器进行绑定
+*******************************************************/
+void TestPlugin1(int DataLen,float* pfOUT,float* High,float* Low, float* Close)
+{
+	//for(int i=0;i<DataLen;i++)
+	//{
+	//	pfOUT[i] = High[i];
+	//}
+	KDirection direction= NODIRECTION; //1:up, -1:down, 0:no drection。
+	KLine* ks = new KLine[DataLen];
+	KLine up_k; //向上临时K线
+	KLine down_k; //向下临时k线
+	KLine top_k=ks[0]; //最近的顶分型
+	KLine bottom_k=ks[0]; //最近的底分型
+	KLine tmp_k; //初始临时k线
+	int down_k_valid=0; //向下有效k线数
+	int up_k_valid=0; //向上有效k线数
+	KDirection up_flag = NODIRECTION; //上涨标志
+
+	//init ks lines by using the import datas
+	for(int i=0;i<DataLen;i++){
+		ks[i].index = i;
+		ks[i].high = High[i];
+		ks[i].low = Low[i];
+		ks[i].prop = 0;
+		ZeroMemory(&ks[i].Ext, sizeof(klineExtern));//先清0
+	};
+	
+	//对ks数组数据进行分型处理
+	tmp_k = ks[0];
+	
+	for(int i=1;i<DataLen;i++)
+	{
+		KLine curr_k=ks[i];
+		KLine last=ks[i-1];
+		/*
+		从第二根K线起，需要和第一根K线相比，给出一个初始方向。
+		假如两根K线为全包含，则仍未有方向，tmp_k为包含的K线。
+		*/
+		direction = (KDirection)last.Ext.nDirector;
+		tmp_k = last;
+		if(tmp_k.Ext.nMegre)
+		{
+			//如果有合并，就把合并的高低点给tmp_k
+			tmp_k.high = tmp_k.Ext.MegreHigh;
+			tmp_k.low = tmp_k.Ext.MegreLow;
+		}
+
+		switch(direction)
+		{
+			case NODIRECTION:
+			{
+				int include_flag = isIncluded(tmp_k, curr_k);
+				if(include_flag == 0)//不包含
+				{
+					//如果上涨，则把tmp_k设置为底分型；否则，则设置为顶分型
+					if (isUp(tmp_k,curr_k))
+					{
+						ks[i].Ext.nDirector = (int)UP;
+					}
+					else
+					{
+						ks[i].Ext.nDirector = (int)DOWN;
+					};
+				};
+				break;
+			}
+			case UP:
+			{
+			
+				//是否包含,tmp_k是上一根最新的，如果有包含也是最新的
+				if (isIncluded(tmp_k, curr_k)!=0)
+				{
+					
+					//若包含则取向上包含,同时赋值
+					up_k = kMerge(tmp_k, curr_k, direction);
+
+					ks[i].high = up_k.high;
+					ks[i].low = up_k.low;
+
+					ks[i].Ext.MegreHigh = up_k.high;
+					ks[i].Ext.MegreLow = up_k.low;
+					ks[i].Ext.nDirector = (int)UP; //方向是向上包含
+					ks[i].Ext.nMegre = 1; //包含标识
+					ks[i-1].Ext.nMegre = -1; //-1代表后面会忽略掉
+					
+				}
+				else
+				{//没有包含的情况
+					up_flag = isUp(tmp_k, curr_k);
+					if(up_flag==UP)
+					{
+						ks[i].Ext.nDirector = (int)UP;
+					}
+					else if(up_flag == DOWN)
+					{
+						ks[i].Ext.nDirector = (int)DOWN;
+					};
+				};
+				break;
+			}
+			case DOWN: 
+			{			
+				//是否包含,tmp_k是上一根最新的，如果有包含也是最新的
+				if (isIncluded(tmp_k, curr_k)!=0)
+				{
+
+					//若包含则取向上包含,同时赋值
+					down_k = kMerge(tmp_k, curr_k, direction);
+
+					ks[i].high = down_k.high;
+					ks[i].low = down_k.low;
+
+					ks[i].Ext.MegreHigh = down_k.high;
+					ks[i].Ext.MegreLow = down_k.low;
+					ks[i].Ext.nDirector = (int)DOWN; //方向是向上包含
+					ks[i].Ext.nMegre = 1; //包含标识
+					ks[i-1].Ext.nMegre = -1; //-1代表后面会忽略掉
+
+				}
+				else
+				{//没有包含的情况
+					up_flag = isUp(tmp_k, curr_k);
+					if(up_flag==UP)
+					{
+						ks[i].Ext.nDirector = (int)UP;
+					}
+					else if(up_flag == DOWN)
+					{
+						ks[i].Ext.nDirector = (int)DOWN;
+					};
+				};
+				break;
+			};
+			default:
+				break;
+		}
+	};
+
+
+	for(int i=0;i<DataLen;i++)
+	{
+		pfOUT[i] = ks[i].high;
+	}
+
+	delete []ks;
+}
+
+void TestPlugin2(int DataLen,float* pfOUT,float* High,float* Low, float* Close)
+{
+	//for(int i=0;i<DataLen;i++)
+	//{
+	//	pfOUT[i] = Low[i];
+	//}
+
+	KDirection direction= NODIRECTION; //1:up, -1:down, 0:no drection。
+	KLine* ks = new KLine[DataLen];
+	KLine up_k; //向上临时K线
+	KLine down_k; //向下临时k线
+	KLine top_k=ks[0]; //最近的顶分型
+	KLine bottom_k=ks[0]; //最近的底分型
+	KLine tmp_k; //初始临时k线
+	int down_k_valid=0; //向下有效k线数
+	int up_k_valid=0; //向上有效k线数
+	KDirection up_flag = NODIRECTION; //上涨标志
+
+	//init ks lines by using the import datas
+	for(int i=0;i<DataLen;i++){
+		ks[i].index = i;
+		ks[i].high = High[i];
+		ks[i].low = Low[i];
+		ks[i].prop = 0;
+		ZeroMemory(&ks[i].Ext, sizeof(klineExtern));//先清0
+	};
+	
+	//对ks数组数据进行分型处理
+	tmp_k = ks[0];
+	
+	for(int i=1;i<DataLen;i++)
+	{
+		KLine curr_k=ks[i];
+		KLine last=ks[i-1];
+
+		if(curr_k.high >= 10.399 && 
+			curr_k.high < 10.401 &&
+			curr_k.low >= 10.209   &&
+			curr_k.low < 10.211)
+		{
+			if(IsDebuggerPresent() == TRUE)
+			{
+				__asm int 3
+			}
+		}
+
+		/*
+		从第二根K线起，需要和第一根K线相比，给出一个初始方向。
+		假如两根K线为全包含，则仍未有方向，tmp_k为包含的K线。
+		*/
+		direction = (KDirection)last.Ext.nDirector;
+		tmp_k = last;
+		if(tmp_k.Ext.nMegre)
+		{
+			//如果有合并，就把合并的高低点给tmp_k
+			tmp_k.high = tmp_k.Ext.MegreHigh;
+			tmp_k.low = tmp_k.Ext.MegreLow;
+		}
+
+		switch(direction)
+		{
+			case NODIRECTION:
+			{
+				int include_flag = isIncluded(tmp_k, curr_k);
+				if(include_flag == 0)//不包含
+				{
+					//如果上涨，则把tmp_k设置为底分型；否则，则设置为顶分型
+					if (isUp(tmp_k,curr_k))
+					{
+						ks[i].Ext.nDirector = (int)UP;
+					}
+					else
+					{
+						ks[i].Ext.nDirector = (int)DOWN;
+					};
+				};
+				break;
+			}
+			case UP:
+			{
+			
+				//是否包含,tmp_k是上一根最新的，如果有包含也是最新的
+				if (isIncluded(tmp_k, curr_k)!=0)
+				{
+					//若包含则取向上包含,同时赋值
+					up_k = kMerge(tmp_k, curr_k, direction);
+
+					ks[i].high = up_k.high;
+					ks[i].low = up_k.low;
+
+					ks[i].Ext.MegreHigh = up_k.high;
+					ks[i].Ext.MegreLow = up_k.low;
+					ks[i].Ext.nDirector = (int)UP; //方向是向上包含
+					ks[i].Ext.nMegre = 1; //包含标识
+					ks[i-1].Ext.nMegre = -1; //-1代表后面会忽略掉
+					
+				}
+				else
+				{//没有包含的情况
+					up_flag = isUp(tmp_k, curr_k);
+					if(up_flag==UP)
+					{
+						ks[i].Ext.nDirector = (int)UP;
+					}
+					else if(up_flag == DOWN)
+					{
+						ks[i].Ext.nDirector = (int)DOWN;
+					};
+				};
+				break;
+			}
+			case DOWN: 
+			{			
+				//是否包含,tmp_k是上一根最新的，如果有包含也是最新的
+				if (isIncluded(tmp_k, curr_k)!=0)
+				{
+
+					//若包含则取向上包含,同时赋值
+					down_k = kMerge(tmp_k, curr_k, direction);
+
+					ks[i].high = down_k.high;
+					ks[i].low = down_k.low;
+
+					ks[i].Ext.MegreHigh = down_k.high;
+					ks[i].Ext.MegreLow = down_k.low;
+					ks[i].Ext.nDirector = (int)DOWN; //方向是向上包含
+					ks[i].Ext.nMegre = 1; //包含标识
+					ks[i-1].Ext.nMegre = -1; //-1代表后面会忽略掉
+
+				}
+				else
+				{//没有包含的情况
+					up_flag = isUp(tmp_k, curr_k);
+					if(up_flag==UP)
+					{
+						ks[i].Ext.nDirector = (int)UP;
+					}
+					else if(up_flag == DOWN)
+					{
+						ks[i].Ext.nDirector = (int)DOWN;
+					};
+				};
+				break;
+			};
+			default:
+				break;
+		}
+	};
+
+
+	for(int i=0;i<DataLen;i++)
+	{
+		pfOUT[i] = ks[i].low;
+	}
+
+	delete []ks;
+}
+
+//判断缺口，一笔内如果有缺口就处理该缺口, 处理向上一笔中缺口
+//假设上升过程中，如果有一个大的向下的缺口，并且返回
+int Handle_One_Pen_QueKou_Up(KLine* ks, int nlow, int nhigh)
+{
+	
+	for(int n = nlow+2; n < nhigh; n++)
+	{
+		if( ks[n-1].low >= ks[nlow].high  &&  ks[n].high < ks[nlow].low)
+		{
+			//已经是一个大缺口
+			ks[n-1].prop = 1;
+			ks[n].prop = -1;
+			return n;
+		}
+	}
+	return 0;
+}
+
+int Handle_One_Pen_QueKou_Down(KLine* ks, int nlow, int nhigh)
+{
+	
+	for(int n = nlow+2; n < nhigh; n++)
+	{
+		if(ks[n-1].high <= ks[nlow].low  &&  ks[n].low > ks[nlow].high)
+		{
+			//已经是一个大缺口
+			ks[n-1].prop = -1;
+			ks[n].prop = 1;
+			return TRUE;
+		}
+	}
+	return 0;
+}
+
+//判断是否是符合一笔条件,是否是向上的一笔
+BOOL bIsOne_Open_Up(KLine* ks, int nlow, int nhigh)
+{
+
+	//首先检测，在这一笔中如果有其中一根k最高点大于笔的最高点，直接返回FALSE
+	//for(int n = nlow+1; n < nhigh; n++)
+	//{
+	//	if(ks[n].high > ks[nhigh].high)
+	//	{
+	//		return FALSE;
+	//	}
+	//}
+	if(1)
+	{
+		int nTop = nlow;
+		for(int n = nlow+1; n <= nhigh; n++)
+		{
+			if(ks[n].Ext.nMegre != -1)
+			{
+				if(ks[n].low < ks[nTop].low)
+				{
+					nTop = n;
+				}
+			}
+		}
+		if(nTop != nlow)
+		{
+			ks[nlow].prop = 0;
+			ks[nTop].prop = -1;
+
+			nlow = nTop;
+		}
+	}
+
+	if(1)
+	{
+		int nTop = nlow;
+		for(int n = nlow+1; n <= nhigh; n++)
+		{
+			if(ks[n].Ext.nMegre != -1)
+			{
+				if(ks[n].high >= ks[nTop].high)
+				{
+					nTop = n;
+				}
+			}
+		}
+		if(nTop != nhigh)
+		{
+			if(bIsOne_Open_Up(ks, nlow, nTop))
+			{
+				ks[nTop].prop = 1;
+			}
+
+			return FALSE;
+		}
+	}
+
+	int nValid = 0;
+
+	//KLine* kln = new KLine[200];
+	KLine kln[300];
+	ZeroMemory((char*)kln, 300*sizeof(KLine));
+
+	//for(int n = nlow+1; n < nhigh; n++)
+	for(int n = nlow; n <= nhigh; n++)
+	{
+		if(ks[n].Ext.nMegre != -1)
+		{
+			//if(ks[n].Ext.nDirector == UP)
+			{
+				kln[nValid] = ks[n];
+				nValid++;
+			}
+		}
+	}
+
+	if(nValid < 3)
+	{
+		//delete[] kln;
+		return FALSE;
+	}
+
+	////必须要遍历
+	//for(int x = 0; x < nValid-2; x++)
+	//{
+	//	for(int y = x+1; y < nValid-1; y++)
+	//	{
+	//		for(int z = y+1; z < nValid; z++)
+	//		{
+	//			if(isUp(ks[nlow], kln[x]) == UP && isUp(kln[x], kln[y]) == UP && isUp(kln[y], kln[z]) == UP && isUp(kln[z], ks[nhigh]) == UP)
+	//			{
+	//				/*int now = Handle_One_Pen_QueKou_Up(ks,  nlow,  nhigh);
+	//				if(now)
+	//				{
+	//					return bIsOne_Open_Up(ks,  now,  nhigh);
+	//				}*/
+	//				return TRUE;
+	//			}
+	//		}
+	//	}
+	//}
+
+	for(int a = 0; a <= nValid-4; a++)
+	{
+		for(int b = a+1; b <= nValid-3; b++)
+		{
+			for(int c = b+1; c <= nValid-2; c++)
+			{
+				for(int d = c+1; d <= nValid-1; d++)
+				{
+					for(int e = d+1; e <= nValid; e++)
+					{
+						if(isUp(kln[a], kln[b]) == UP && isUp(kln[b], kln[c]) == UP && isUp(kln[c], kln[d]) == UP && isUp(kln[d], kln[e]) == UP)
+						{
+							return TRUE;
+						}
+					}
+				}
+				
+			}
+		}
+	}
+
+	//delete[] kln;
+	return FALSE;
+
+
+	return FALSE;
+}
+
+//判断是否是符合一笔条件,是否是向下的一笔
+BOOL bIsOne_Open_Down(KLine* ks, int nlow, int nhigh)
+{
+
+	//首先检测，在这一笔中如果有其中一根k最低点小于笔的最低点，直接返回FALSE
+	//for(int n = nlow+1; n < nhigh; n++)
+	//{
+	//	if(ks[n].low < ks[nhigh].low)
+	//	{
+	//		return FALSE;
+	//	}
+	//}
+	if(1)
+	{
+		int nTop = nlow;
+		for(int n = nlow+1; n <= nhigh; n++)
+		{
+			if(ks[n].Ext.nMegre != -1)
+			{
+				if(ks[n].high > ks[nTop].high)
+				{
+					nTop = n;
+				}
+			}
+		}
+		if(nTop != nlow)
+		{
+			ks[nlow].prop = 0;
+			ks[nTop].prop = 1;
+
+			nlow = nTop;
+		}
+	}
+
+	if(1)
+	{
+		int nTop = nlow;
+		for(int n = nlow+1; n <= nhigh; n++)
+		{
+			if(ks[n].Ext.nMegre != -1)
+			{
+				if(ks[n].low <= ks[nTop].low)
+				{
+					nTop = n;
+				}
+			}
+		}
+		if(nTop != nhigh)
+		{
+			if(bIsOne_Open_Down(ks, nlow, nTop))
+			{
+				ks[nTop].prop = -1;
+			}
+
+			return FALSE;
+		}
+	}
+
+	int nValid = 0;
+
+	//KLine* kln = new KLine[200];
+	KLine kln[300];
+	ZeroMemory((char*)kln, 300*sizeof(KLine));
+
+	//for(int n = nlow+1; n < nhigh; n++)
+	for(int n = nlow; n <= nhigh; n++)
+	{
+		if(ks[n].Ext.nMegre != -1)
+		{
+			//if(ks[n].Ext.nDirector == DOWN)
+			{
+				kln[nValid] = ks[n];
+				nValid++;
+			}
+		}
+	}
+	
+	if(nValid < 3)
+	{
+		//delete[] kln;
+		return FALSE;
+	}
+
+	//必须要遍历
+	//for(int x = 0; x < nValid-2; x++)
+	//{
+	//	for(int y = x+1; y < nValid-1; y++)
+	//	{
+	//		for(int z = y+1; z < nValid; z++)
+	//		{
+	//			if(isUp(ks[nlow], kln[x]) == DOWN && isUp(kln[x], kln[y]) == DOWN && isUp(kln[y], kln[z]) == DOWN && isUp(kln[z], ks[nhigh]) == DOWN)
+	//			{
+	//				return TRUE;
+	//			}
+	//		}
+	//	}
+	//}
+	for(int a = 0; a <= nValid-4; a++)
+	{
+		for(int b = a+1; b <= nValid-3; b++)
+		{
+			for(int c = b+1; c <= nValid-2; c++)
+			{
+				for(int d = c+1; d <= nValid-1; d++)
+				{
+					for(int e = d+1; e <= nValid; e++)
+					{
+						if(isUp(kln[a], kln[b]) == DOWN && isUp(kln[b], kln[c]) == DOWN && isUp(kln[c], kln[d]) == DOWN && isUp(kln[d], kln[e]) == DOWN)
+						{
+							return TRUE;
+						}
+					}
+				}
+
+			}
+		}
+	}
+	
+	//delete[] kln;
+	return FALSE;
+}
+
+void Handle_Right_DFX_Diyu_Left_DFX(KLine* ks, int nlowDFX, int nhighDFX, int *Outi)
+{
+	//if( ks[nhighDFX].high >= 36.169 && 
+	//	ks[nhighDFX].high < 36.171 &&
+	//	ks[nhighDFX].low >= 36.069 &&
+	//	ks[nhighDFX].low < 36.071)
+	//{
+	//	if(IsDebuggerPresent() == TRUE)
+	//	{
+	//		__asm int 3
+	//	}
+	//}
+
+	//由于已经清理掉nlowDFX这个底分型的标志位，往前找上一顶分型
+	int n = nlowDFX;
+	while(n)
+	{
+		n--;
+		if(n <= 0)
+		{
+			break;
+		}
+
+		if(ks[n].prop == 1)
+		{
+			int TopIndex = n;
+			for(int k = n+1; k < nhighDFX; k++)
+			{
+				//从上个顶分型找起，找到先在这个底分型，找到最高点，然后把最高点替换之前的顶分型，再把顶分型的后面的k先索引返回去再重新搜索
+				if(ks[k].high >= ks[TopIndex].high && ks[k].Ext.nDirector != -1)
+				{
+					TopIndex = k;
+				}
+			}
+
+			if(TopIndex != n)
+			{
+				ks[n].prop = 0;
+				ks[TopIndex].prop = 1;
+				//ks[TopIndex].Ext.nMegre = 0;
+				*Outi = TopIndex+2;
+			}
+			else
+			{
+				ks[nhighDFX].prop = -1;
+				ks[nhighDFX].Ext.nProp = -1;
+			}
+			return;
+
+		}
+		else if(ks[n].prop == -1)
+		{
+			return;
+		}
+	}
+}
+
+void Handle_Right_TFX_Dayu_Left_TFX(KLine* ks, int nlowDFX, int nhighDFX, int *Outi)
+{
+	//由于已经清理掉nlowTFX这个顶分型的标志位，往前找上一底分型
+	int n = nlowDFX;
+	while(n)
+	{
+		n--;
+		if(n <= 0)
+		{
+			break;
+		}
+
+		if(ks[n].prop == -1)
+		{
+			int TopIndex = n;
+			for(int k = n+1; k < nhighDFX; k++)
+			{
+				//从上个顶分型找起，找到先在这个底分型，找到最高点，然后把最高点替换之前的顶分型，再把顶分型的后面的k先索引返回去再重新搜索
+				if(ks[k].low <= ks[TopIndex].low && ks[k].Ext.nDirector != -1)
+				{
+					TopIndex = k;
+				}
+			}
+
+			if(TopIndex != n)
+			{
+				ks[n].prop = 0;
+				ks[TopIndex].prop = -1;
+				//ks[TopIndex].Ext.nMegre = 0;
+				*Outi = TopIndex+2;
+			}
+			else
+			{
+				ks[nhighDFX].prop = 1;
+				ks[nhighDFX].Ext.nProp = 1;
+			}
+			return;
+		}
+		else if(ks[n].prop == 1)
+		{
+			return;
+		}
+	}
+}
+
+//如果是返回值是TRUE就说明已经是缺口，并且已经处理过了，否则就返回false
+BOOL Handle_IS_QueKou(KLine*  ks, int n, int i)
+{
+	BOOL bFlag = FALSE;
+
+	//方向向上，如果    i的底 > n 顶，   i-1的顶 < n的顶
+	if(ks[i].low > ks[n].high && ks[i+1].high < ks[n].low)
+	{
+		bFlag = TRUE;
+	}
+	else
+	{
+		//不成缺口，直接退出
+		return FALSE;
+	}
+
+	//如果前一分型是顶分型
+	if(ks[n].prop == 1)
+	{
+		//如果现在的是顶分型,
+		if(ks[i].Ext.nDirector == UP)
+		{
+			//先把钱一个顶分型取消，在用现在的作为顶分型
+			ks[n].prop = 0;
+			ks[i].prop = 1;
+
+			// 再找前一个底分型，如果缺口还是比这个底分型大，就可以把i+1置为底分型
+			while(n)
+			{
+				n--;
+				if(n <=0)
+				{
+					break;
+				}
+
+				if(ks[n].prop)
+				{
+					if(ks[n].prop == -1)
+					{
+						if(ks[i].low > ks[n].high && ks[i+1].high < ks[n].low)
+						{
+							ks[i+1].prop = -1;
+							return TRUE;
+						}
+					}
+				}
+			}
+
+			return FALSE;
+		}
+		else if(ks[i].Ext.nDirector == DOWN)
+		{
+			//如果前一个是顶分型，如果现在是底分型，判断是否成为一笔的可能
+			if(bIsOne_Open_Down(ks, n, i))
+			{
+				//是一笔，把i 设置为
+				ks[i].prop = -1;
+				ks[i+1].prop = 1;
+				return TRUE;
+			}
+			else
+			{
+				//如果不能成为1笔，再往前找到上一个分型
+				return FALSE;
+			}
+		}
+
+	}
+	else if(ks[n].prop == -1)
+	{
+		//如果现在的是顶分型,
+		if(ks[i].Ext.nDirector == DOWN)
+		{
+			//先把钱一个顶分型取消，在用现在的作为顶分型
+			ks[n].prop = 0;
+			ks[i].prop = 1;
+
+			// 再找前一个底分型，如果缺口还是比这个底分型大，就可以把i+1置为底分型
+			while(n)
+			{
+				n--;
+				if(n <=0)
+				{
+					break;
+				}
+
+				if(ks[n].prop)
+				{
+					if(ks[n].prop == 1)
+					{
+						if(ks[i].low > ks[n].high && ks[i+1].high < ks[n].low)
+						{
+							ks[i+1].prop = 1;
+							return TRUE;
+						}
+					}
+				}
+			}
+
+			return FALSE;
+		}
+		else if(ks[i].Ext.nDirector == UP)
+		{
+			//如果前一个是顶分型，如果现在是底分型，判断是否成为一笔的可能
+			if(bIsOne_Open_Up(ks, n, i))
+			{
+				//是一笔，把i 设置为
+				ks[i].prop = 1;
+				ks[i+1].prop = -1;
+				return TRUE;
+			}
+			else
+			{
+				//如果不能成为1笔，再往前找到上一个分型
+				return FALSE;
+			}
+		}
+	}
+}
+//找上一个分型，然后根据传进来的方向，找到这个方向是不是有5个同方向的来确定分型
+int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Outi)
+{
+	int nValid = 0;
+	int n = i;
+	if(Direction == UP)//顶分型
+	{
+		//因为是向上的方向，先倒遍历，找到上一个底分型，然后再判断是不是足够有5个连续同向上的k线
+		while(n)
+		{
+			n--;
+			if(n <= 0)
+			{
+				break;
+			}
+
+			if(ks[n].prop)
+			{
+				KLine k1 = ks[n];
+				KLine k2 = ks[i];
+
+				if(Handle_IS_QueKou(ks, n, i))
+				{
+					return 0;
+				}
+
+				if(ks[n].prop == 1)//顶分型
+				{
+					//顶分型标志位, 不符合现在找的目标，两个顶分型做对比
+					if(k1.high > k2.high)
+					{
+						//左边的比右边的高,直接返回
+						return 0;
+					}
+					else
+					{
+						//左边的没有右边的高，清掉左边的
+						ks[n].prop = 0;
+						ks[n].Ext.nProp = 0;
+
+						//ks[i].prop = 1;
+						//ks[i].Ext.nProp = 1;
+
+						Handle_Right_TFX_Dayu_Left_TFX(ks, n, i, Outi);
+						//不能简单的
+
+						return 0;
+					}
+				}
+				else //底分型
+				{
+					//找到底分型以后，先判断，必须是向上方向
+					if(isUp(k1, k2) == UP)
+					{
+						if(bIsOne_Open_Up(ks, n, i))
+						{
+							ks[i].prop = 1;
+							ks[i].Ext.nProp = 1;
+							return 0;
+						}
+						else
+						{
+							//判断玩如果不是一笔的话，还有进行处理
+							//Handle_No_Pen_Up(ks, i);
+						}
+					}
+					else
+					{
+						//如果方向都不算是向上，放弃，啥都不干
+						return 0;
+					}
+
+				}
+
+				return 0;
+			}
+		}
+
+
+
+		//遍历完以后如果还没有找到任何一个分型, 直接标记顶分型，然后返回
+		ks[i].prop = 1;
+		ks[i].Ext.nProp = 1;
+		return 0;
+	}
+	else if(Direction == DOWN)
+	{
+		//因为是向下的方向，先倒遍历，找到上一个顶分型，然后再判断是不是足够有5个连续同向下的k线
+		while(n)
+		{
+			n--;
+			if(n <= 0)
+			{
+				break;
+			}
+
+			if(ks[n].prop)
+			{
+				KLine k1 = ks[n];
+				KLine k2 = ks[i];
+
+				if(Handle_IS_QueKou(ks, n, i))
+				{
+					return 0;
+				}
+
+				if(ks[n].prop == -1)//底分型
+				{
+					//底分型标志位, 不符合现在找的目标，两个底分型做对比
+					if(k1.low < k2.low)
+					{
+						//左边的比右边的低,直接返回
+						return 0;
+					}
+					else
+					{
+						//左边的没有右边的低，清掉左边的
+						ks[n].prop = 0;
+						ks[n].Ext.nProp = 0;
+
+						//ks[i].prop = -1;
+						//ks[i].Ext.nProp = -1;
+					
+						//不能简单的把左边的清掉那么简单，，
+						//1先清掉左边的底，然后往前找，找到前一个顶，再做一次从（上一个顶--->现在这底 之间的处理）
+						Handle_Right_DFX_Diyu_Left_DFX(ks, n, i, Outi);
+
+
+						return 0;
+					}
+				}
+				else //顶分型
+				{
+					//找到底分型以后，先判断，必须是向上方向
+					if(isUp(k1, k2) == DOWN)
+					{
+						if(bIsOne_Open_Down(ks, n, i))
+						{
+							ks[i].prop = -1;
+							ks[i].Ext.nProp = -1;
+							return 0;
+						}
+						else
+						{
+							//判断玩如果不是一笔的话，还有进行处理
+							//需要再次判断这次的底和上次的底比较，如果找到了，
+							//Handle_No_Pen_Down(ks, i);
+						}
+					}
+					else
+					{
+						//如果方向都不算是向上，放弃，啥都不干
+						return 0;
+					}
+
+				}
+				return 0;
+			}
+		}
+
+
+
+		//遍历完以后如果还没有找到任何一个分型, 直接标记顶分型，然后返回
+		ks[i].prop = -1;
+		ks[i].Ext.nProp = -1;
+		return 0;
+	}
+
+}
+
+void Handle_QueKou(KLine* ks, int DataLen)
+{
+	int k_low = 0;
+	int k_high = 0;
+
+
+	for(int n = 0; n  < DataLen; n++)
+	{
+		if(ks[n].prop)
+		{
+			if(k_low == 0)
+			{
+				k_low = n;
+				for(int k = n+1; k < DataLen; k++)
+				{
+					if(ks[k].prop)
+					{
+						k_high = k;
+					}
+				}
+			}
+			else
+			{
+				k_high = n;
+			}
+		
+			if(isUp(ks[k_low], ks[k_high]) == UP)
+			{
+				Handle_One_Pen_QueKou_Up(ks, k_low, k_high);
+			}
+			else if(isUp(ks[k_low], ks[k_high]) == DOWN)
+			{
+				Handle_One_Pen_QueKou_Down(ks, k_low, k_high);
+			}
+
+			k_low = n;
+		}
+	}
+}
+
+void TestPlugin3(int DataLen,float* Out,float* High,float* Low, float* Close)
+{
+    ofstream mainfile;
+	mainfile.open(LOGMAIN, ios::app);
+	mainfile <<"++++++++++++++++\n";
+
+
+	KDirection direction= NODIRECTION; //1:up, -1:down, 0:no drection。
+	KLine* ks = new KLine[DataLen];
+	KLine up_k; //向上临时K线
+	KLine down_k; //向下临时k线
+	KLine top_k=ks[0]; //最近的顶分型
+	KLine bottom_k=ks[0]; //最近的底分型
+	KLine tmp_k; //初始临时k线
+	int down_k_valid=0; //向下有效k线数
+	int up_k_valid=0; //向上有效k线数
+	KDirection up_flag = NODIRECTION; //上涨标志
+
+	//init ks lines by using the import datas
+	for(int i=0;i<DataLen;i++){
+		ks[i].index = i;
+		ks[i].high = High[i];
+		ks[i].low = Low[i];
+		ks[i].prop = 0;
+		ZeroMemory(&ks[i].Ext, sizeof(klineExtern));//先清0
+	};
+	
+	mainfile <<"Put data in ks over..\n";
+
+	//对ks数组数据进行分型处理
+	tmp_k = ks[0];
+	
+	for(int i=1;i<DataLen;i++)
+	{
+		mainfile <<"Starting to handle K index " <<i <<"\n";
+		KLine curr_k=ks[i];
+		KLine last=ks[i-1];
+
+		if(curr_k.high >= 16.579 && 
+			curr_k.high < 16.581 &&
+			curr_k.low >= 16.289   &&
+			curr_k.low < 16.291)
+		{
+			if(IsDebuggerPresent() == TRUE)
+			{
+				__asm int 3
+			}
+		}
+
+		/*
+		从第二根K线起，需要和第一根K线相比，给出一个初始方向。
+		假如两根K线为全包含，则仍未有方向，tmp_k为包含的K线。
+		*/
+		direction = (KDirection)last.Ext.nDirector;
+		tmp_k = last;
+		if(tmp_k.Ext.nMegre)
+		{
+			//如果有合并，就把合并的高低点给tmp_k
+			tmp_k.high = tmp_k.Ext.MegreHigh;
+			tmp_k.low = tmp_k.Ext.MegreLow;
+		}
+
+		switch(direction)
+		{
+			case NODIRECTION:
+			{
+				int include_flag = isIncluded(tmp_k, curr_k);
+				if(include_flag > 0)//左包含，这里是否应该是 include_flag != 0 也就是不管左右包含都是同样处理
+				{
+					//tmp_k = curr_k;刚刚开始的时候，有包含，但是不知道怎么处理好
+				}
+				else if(include_flag == 0)//不包含
+				{
+					//如果上涨，则把tmp_k设置为底分型；否则，则设置为顶分型
+					if (isUp(tmp_k,curr_k))
+					{
+						ks[i].Ext.nDirector = (int)UP;
+						//direction = UP;
+					}
+					else
+					{
+						ks[i].Ext.nDirector = (int)DOWN;
+						//SET_TOPFX(ks[tmp_k.index]);
+						//direction = DOWN;
+					};
+				};
+				break;
+			}
+			case UP:
+			{
+			
+				//是否包含,tmp_k是上一根最新的，如果有包含也是最新的
+				if (isIncluded(tmp_k, curr_k)!=0)
+				{
+					
+					//若包含则取向上包含,同时赋值
+					up_k = kMerge(tmp_k, curr_k, direction);
+
+					ks[i].high = up_k.high;
+					ks[i].low = up_k.low;
+
+					ks[i].Ext.MegreHigh = up_k.high;
+					ks[i].Ext.MegreLow = up_k.low;
+					ks[i].Ext.nDirector = (int)UP; //方向是向上包含
+					ks[i].Ext.nMegre = 1; //包含标识
+					ks[i-1].Ext.nMegre = -1; //-1代表后面会忽略掉
+					
+				}
+				else
+				{//没有包含的情况
+				
+					//判断是否上涨
+					up_flag = isUp(tmp_k, curr_k);
+					if(up_flag==UP)
+					{
+						
+						//继续上涨则把当前K线置换为上涨临时K线
+						//如果方向相同,只把方向标识位改变，其他的就不用去管
+						ks[i].Ext.nDirector = (int)UP;
+					}
+					else if(up_flag == DOWN)
+					{
+						ks[i].Ext.nDirector = (int)DOWN;
+						//不继续上涨
+						//判断顶分型是否成立
+						Handle_FenXing(ks, DataLen, i-1, UP, &i);
+					};
+				};
+				break;
+			}
+			case DOWN: 
+			{			
+				//是否包含,tmp_k是上一根最新的，如果有包含也是最新的
+				if (isIncluded(tmp_k, curr_k)!=0)
+				{
+
+					//若包含则取向上包含,同时赋值
+					down_k = kMerge(tmp_k, curr_k, direction);
+
+					ks[i].high = down_k.high;
+					ks[i].low = down_k.low;
+
+					ks[i].Ext.MegreHigh = down_k.high;
+					ks[i].Ext.MegreLow = down_k.low;
+					ks[i].Ext.nDirector = (int)DOWN; //方向是向上包含
+					ks[i].Ext.nMegre = 1; //包含标识
+					ks[i-1].Ext.nMegre = -1; //-1代表后面会忽略掉
+
+				}
+				else
+				{//没有包含的情况
+
+					//判断是否继续下跌
+					up_flag = isUp(tmp_k, curr_k);
+					if(up_flag==DOWN)
+					{
+
+						//如果方向相同,只把方向标识位改变，其他的就不用去管
+						curr_k.Ext.nDirector = (int)DOWN;
+						ks[i].Ext.nDirector = (int)DOWN;
+					}
+					else if(up_flag == UP)
+					{
+						ks[i].Ext.nDirector = (int)UP;
+						//不继续下跌
+						//判断顶分型是否成立
+						Handle_FenXing(ks, DataLen, i-1, DOWN, &i);
+					};
+				};
+
+				break;
+			};
+			default:
+				break;
+		}
+	};
+
+
+	//在最后做一次缺口的处理
+	//Handle_QueKou(ks, DataLen);
+
+
+	for(int i=0;i<DataLen;i++)
+	{
+		Out[i] = ks[i].prop;
+	};
+
+	checkKs(DataLen, ks);
+	checkOuts(DataLen, Out);
+	
+	delete []ks;
+	mainfile.close();
+}
+
+
+
+
+
+
+
+
+//加载的函数
+PluginTCalcFuncInfo g_CalcFuncSets[] = 
+{
+	{1,(pPluginFUNC)&TestPlugin1},
+	{2,(pPluginFUNC)&TestPlugin2},
+	{3,(pPluginFUNC)&TestPlugin3},
+	{0,NULL},
+};
+
+//导出给TCalc的注册函数
+BOOL RegisterTdxFunc(PluginTCalcFuncInfo** pFun)
+{
+	if(*pFun==NULL)
+	{
+		(*pFun)=g_CalcFuncSets;
+		return TRUE;
+	}
+	return FALSE;
+
+}
+
+
+//void TestPlugin4(int DataLen,float* Out,float* High,float* Low, float* Close)
+//{
+//    ofstream mainfile;
+//	mainfile.open(LOGMAIN, ios::app);
+//	mainfile <<"++++++++++++++++\n";
+//
+//
+//	KDirection direction= NODIRECTION; //1:up, -1:down, 0:no drection。
+//	KLine* ks = new KLine[DataLen];
+//	KLine up_k; //向上临时K线
+//	KLine down_k; //向下临时k线
+//	KLine top_k=ks[0]; //最近的顶分型
+//	KLine bottom_k=ks[0]; //最近的底分型
+//	KLine tmp_k; //初始临时k线
+//	int down_k_valid=0; //向下有效k线数
+//	int up_k_valid=0; //向上有效k线数
+//	KDirection up_flag = NODIRECTION; //上涨标志
+//
+//	//init ks lines by using the import datas
+//	for(int i=0;i<DataLen;i++){
+//		ks[i].index = i;
+//		ks[i].high = High[i];
+//		ks[i].low = Low[i];
+//		ks[i].prop = 0;
+//	};
+//	
+//	mainfile <<"Put data in ks over..\n";
+//
+//	//对ks数组数据进行分型处理
+//	tmp_k = ks[0];
+//	
+//	for(int i=1;i<DataLen;i++){
+//		mainfile <<"Starting to handle K index " <<i <<"\n";
+//		KLine curr_k=ks[i];
+//		KLine last=ks[i-1];
+//		/*
+//		从第二根K线起，需要和第一根K线相比，给出一个初始方向。
+//		假如两根K线为全包含，则仍未有方向，tmp_k为包含的K线。
+//		*/
+//		switch(direction)
+//		{
+//			case NODIRECTION:
+//			{
+//				int include_flag = isIncluded(tmp_k, curr_k);
+//				if(include_flag > 0)//左包含，这里是否应该是 include_flag != 0 也就是不管左右包含都是同样处理
+//				{
+//					tmp_k = curr_k;
+//				}
+//				else if(include_flag == 0)//不包含
+//				{
+//					mainfile <<"include_flag=0 \n";
+//					//up_flag = isUp(tmp_k,curr_k);
+//					up_k = tmp_k;
+//					down_k = tmp_k;
+//					//如果上涨，则把tmp_k设置为底分型；否则，则设置为顶分型
+//					if (isUp(tmp_k,curr_k))
+//					{
+//						SET_BOTTOMFX(ks[tmp_k.index]);
+//						direction = UP;
+//					}
+//					else
+//					{
+//						SET_TOPFX(ks[tmp_k.index]);
+//						direction = DOWN;
+//					};
+//				};
+//				break;
+//			}
+//			case UP:
+//			{
+//			
+//				//是否包含
+//				if (isIncluded(up_k, curr_k)!=0)
+//				{
+//					
+//					//若包含则取向上包含
+//					up_k = kMerge(up_k, curr_k, direction);
+//					up_k.index = curr_k.index;
+//				}else{
+//				
+//					//判断是否上涨
+//					up_flag = isUp(up_k, curr_k);
+//					if(up_flag==UP)
+//					{
+//						
+//						//继续上涨则把当前K线置换为上涨临时K线
+//						up_k = curr_k;
+//						up_k_valid++;
+//					}
+//					else if(up_flag==DOWN)
+//					{
+//					
+//						//不继续上涨则判断上一根K线
+//						//判断顶分型是否成立
+//						if(up_k_valid>=4)
+//						{
+//													
+//							SET_TOPFX(up_k);			
+//							direction = DOWN; //set direction down
+//							
+//							//向下有效k线设置为1
+//							down_k_valid=1;
+//							
+//							//向下临时k线设置为up_k
+//							down_k = up_k;
+//						}
+//						else
+//						{
+//						
+//							//是否比之前的底分型低点低
+//							if(curr_k.low<bottom_k.low)
+//							{
+//								
+//								//是否和底分型有包含关系
+//								if (isIncluded(bottom_k, curr_k)==0)
+//								{
+//									
+//									//如果没有包含关系,设置当前k线为临时向下k线。
+//									down_k = curr_k;
+//								}
+//								else
+//								{
+//								
+//									//如果有包含关系，则向下包含处理后设置为临时向下k线
+//									down_k = kMerge(bottom_k, curr_k, -1);
+//								};
+//
+//								
+//								CLEAR_FX(bottom_k); //取消之前底分型
+//								direction = DOWN; //改变方向为向下							
+//								down_k_valid++; //向下有效K线+1
+//							}
+//							else
+//							{
+//								//如果大于等于之前的底分型低点，则忽略
+//								continue;
+//							};
+//						};
+//					};
+//				};
+//				break;
+//			}
+//			case DOWN: 
+//			{			
+//				if (isIncluded(down_k, curr_k)!=0){				
+//					down_k = kMerge(down_k, curr_k, direction);//若包含则取向下包含
+//					down_k.index = curr_k.index;
+//				}else{				
+//					up_flag = isUp(down_k, curr_k);//判断是否继续下跌
+//					if(up_flag == DOWN){
+//						//继续下跌则把当前K线置换为下跌临时K线
+//						down_k = curr_k;
+//						//下跌有效k线+1
+//						down_k_valid++;
+//					}else if(up_flag == UP){
+//						//不继续下跌则判断上一根K线
+//						//判断底分型是否成立
+//						if(down_k_valid>=4){
+//							//设置down_k为底分型
+//							SET_BOTTOMFX(down_k);
+//							//方向设置为向上
+//							direction = UP;
+//							//向上有效k线设置为1
+//							up_k_valid=1;
+//							//向上临时k线设置为down_k
+//							up_k = down_k;
+//						}else{
+//							//是否比之前的顶分型高点高
+//							if(curr_k.high>top_k.high){
+//								//是否和顶分型有包含关系
+//								if (isIncluded(top_k, curr_k)==0){
+//									//如果没有包含关系,设置当前k线为临时上涨k线。
+//									up_k = curr_k;
+//								}else{
+//									//如果有包含关系，则向上包含处理后设置为临时上涨k线
+//									up_k = kMerge(top_k, curr_k, 1);
+//								};
+//
+//								//取消之前顶分型
+//								CLEAR_FX(top_k);
+//								//改变方向为向上
+//								direction = UP;
+//								//向上有效K线+1
+//								up_k_valid ++;
+//							}else{
+//								//如果小于等于之前的顶分型高点，则忽略
+//								continue;
+//							};
+//						};
+//					};
+//				};
+//				break;
+//			};
+//			default:
+//				break;
+//		}
+//	};
+//
+//	for(int i=0;i<DataLen;i++){
+//		Out[i] = ks[i].prop;
+//		if(Out[i] == (float)1)
+//		{
+//			OutputDebugStringA("顶分型");
+//		}
+//
+//		if(Out[i] == (float)-1)
+//		{
+//			OutputDebugStringA("底分型");
+//		}
+//	};
+//
+//	checkKs(DataLen, ks);
+//	checkOuts(DataLen, Out);
+//	
+//	delete []ks;
+//	mainfile.close();
+//}
