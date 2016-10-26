@@ -3991,7 +3991,7 @@ BOOL ZhongShuAnalu_BeiLi()
 					pd.fXieLv = (pd.d1.fOut_Price - pd.d2.fIn_Price)/(pd.d2.nIn_Index-pd.d1.nOut_Index);
 					pd.fChangDu = (pd.d1.fOut_Price - pd.d2.fIn_Price)*(pd.d1.fOut_Price - pd.d2.fIn_Price) + (pd.d2.nIn_Index-pd.d1.nOut_Index)*(pd.d2.nIn_Index-pd.d1.nOut_Index);
 
-					if(ZSData.nXDEnd_Index - ZSData.nXDStart_Index >= 8 && pairdata.size() < 2)
+					if(ZSData.nXDEnd_Index - ZSData.nXDStart_Index >= 15 && pairdata.size() < 1)
 					{
 						return FALSE;
 					}
@@ -4085,14 +4085,14 @@ BOOL ZhongShuAnalu_BeiLi()
 
 				//碰到这个高压线都要死, 就是最后一个中枢以后只要有一笔超过了上一个中枢的低点了，到排除掉
 				int nLastXD = pairdata[0].d2.nXDEnd_Index+1;
-				for(; nLastXD < nSize_xd_l; nLastXD++)
-				{
-					if(g_xd_l[nLastXD].PointHigh.fVal > pairdata[0].d1.fkk_Min)
-					{
-						delete[] g_xd_l;
-						return FALSE;
-					}
-				}
+				//for(; nLastXD < nSize_xd_l; nLastXD++) //暂时去掉
+				//{
+				//	if(g_xd_l[nLastXD].PointHigh.fVal > pairdata[0].d1.fkk_Min)
+				//	{
+				//		delete[] g_xd_l;
+				//		return FALSE;
+				//	}
+				//}
 	
 
 				float fVDist_d1 = pairdata[1].d1.fOut_Price - pairdata[1].d2.fIn_Price;
