@@ -1519,28 +1519,28 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 					}
 					else
 					{
-						Handle_Top_Top_Replace(ks, DataLen, n, i, Outi);
+						//Handle_Top_Top_Replace(ks, DataLen, n, i, Outi);
 						//左边的没有右边的高，清掉左边的
-						//ks[n].prop = 0;
-						//ks[n].Ext.nProp = 0;
+						ks[n].prop = 0;
+						ks[n].Ext.nProp = 0;
 
-						//ks[i].prop = 1;      //暂时先去掉
-						//ks[i].Ext.nProp = 1; //暂时先去掉
+						ks[i].prop = 1;      //暂时先去掉
+						ks[i].Ext.nProp = 1; //暂时先去掉
 
-						//for (int kkk = n; kkk > 0; kkk--)
-						//{
-						//	if(ks[kkk].prop == -1)
-						//	{
-						//		if(g_orgKs[i+1].high < g_orgKs[kkk].low)
-						//		{
-						//			if((g_orgKs[i].low - g_orgKs[i+1].high) > (g_orgKs[i].high - g_orgKs[kkk].low))
-						//			{
-						//				ks[i+1].prop = -1;
-						//			}
-						//		}
-						//		break;
-						//	}
-						//}
+						for (int kkk = n; kkk > 0; kkk--)
+						{
+							if(ks[kkk].prop == -1)
+							{
+								if(g_orgKs[i+1].high < g_orgKs[kkk].low)
+								{
+									if((g_orgKs[i].low - g_orgKs[i+1].high) > (g_orgKs[i].high - g_orgKs[kkk].low))
+									{
+										ks[i+1].prop = -1;
+									}
+								}
+								break;
+							}
+						}
 						return 0;
 					}
 				}
@@ -1611,28 +1611,28 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 					else
 					{
 						//左边的没有右边的低，清掉左边的
-						Handle_Bottom_Bottom_Replace(ks, DataLen, n, i, Outi);
+						//Handle_Bottom_Bottom_Replace(ks, DataLen, n, i, Outi);
 
-						//ks[n].prop = 0;
-						//ks[n].Ext.nProp = 0;
+						ks[n].prop = 0;
+						ks[n].Ext.nProp = 0;
 
-						//ks[i].prop = -1;
-						//ks[i].Ext.nProp = -1;
+						ks[i].prop = -1;
+						ks[i].Ext.nProp = -1;
 
-						//for (int kkk = n; kkk > 0; kkk--)
-						//{
-						//	if(ks[kkk].prop == 1)  //这个时候是kkk的顶分型
-						//	{
-						//		if(g_orgKs[i+1].low > g_orgKs[kkk].high)
-						//		{
-						//			if((g_orgKs[i+1].low - g_orgKs[i].high) > (g_orgKs[kkk].high - g_orgKs[i].low))
-						//			{
-						//				ks[i+1].prop = 1;
-						//			}
-						//		}
-						//		break;
-						//	}
-						//}
+						for (int kkk = n; kkk > 0; kkk--)
+						{
+							if(ks[kkk].prop == 1)  //这个时候是kkk的顶分型
+							{
+								if(g_orgKs[i+1].low > g_orgKs[kkk].high)
+								{
+									if((g_orgKs[i+1].low - g_orgKs[i].high) > (g_orgKs[kkk].high - g_orgKs[i].low))
+									{
+										ks[i+1].prop = 1;
+									}
+								}
+								break;
+							}
+						}
 						return 0;
 					}
 				}
@@ -1928,22 +1928,22 @@ void TestPlugin3(int DataLen,float* Out,float* High,float* Low, float* TIME/*flo
 		Out[i] = ks[i].prop;
 		if(ks[i].prop)
 		{
-			//char szbuff[128] = {0};
-			//sprintf(szbuff, "[chs] index=%d, prop=%.2f, high=%.2f, low=%.2f", ks[i].index, ks[i].prop, ks[i].high, ks[i].low);
+			char szbuff[128] = {0};
+			sprintf(szbuff, "[chs] index=%d, prop=%.2f, high=%.2f, low=%.2f", ks[i].index, ks[i].prop, ks[i].high, ks[i].low);
 
-			////OutputDebugStringA(szbuff);
-			//if(snn == 0)
-			//{
-			//	snn = ks[i].prop;
-			//}
-			//else
-			//{
-			//	if(snn == ks[i].prop)
-			//	{
-			//		MessageBoxA(NULL, "错误两个一样的顶底", "ss", MB_OK);
-			//	}
-			//	snn = ks[i].prop;
-			//}
+			OutputDebugStringA(szbuff);
+			if(snn == 0)
+			{
+				snn = ks[i].prop;
+			}
+			else
+			{
+				if(snn == ks[i].prop)
+				{
+					MessageBoxA(NULL, "错误两个一样的顶底", "ss", MB_OK);
+				}
+				snn = ks[i].prop;
+			}
 		}
 	};
 
@@ -3571,7 +3571,7 @@ void AnalyXD(Bi_Line *Bl, int nLen)
 	int k = i;
 	while(1)
 	{
-		//__try
+		__try
 		{
 			k = Lookup_Next_XianDuan_EX(Bl, k, nLen );
 			if(k == 0)
@@ -3579,10 +3579,10 @@ void AnalyXD(Bi_Line *Bl, int nLen)
 				break;
 			}
 		}
-		//__except(1)
-		//{
-		//	OutputDebugStringA("[chs] 出现异常错误");
-		//}
+		__except(1)
+		{
+			OutputDebugStringA("[chs] 出现异常错误");
+		}
 	}
 
 
