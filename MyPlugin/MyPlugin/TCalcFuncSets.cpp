@@ -4053,7 +4053,7 @@ BOOL ZhongShuAnalu_BeiLi()
 				{
 					if(nCount <= 1)
 					{
-						//return FALSE;
+						return FALSE;
 					}
 					bChongDie = TRUE;
 				}
@@ -4088,7 +4088,7 @@ BOOL ZhongShuAnalu_BeiLi()
 				{
 					if(nCount <= 1)
 					{
-						//return FALSE;
+						return FALSE;
 					}
 					bChongDie = TRUE;
 				}
