@@ -999,96 +999,176 @@ BOOL bIsOne_Open_Down(KLine* ks, int nlow, int nhigh)
 	return FALSE;
 }
 
-void Handle_Right_DFX_Diyu_Left_DFX(KLine* ks, int nlowDFX, int nhighDFX, int *Outi)
+
+
+/***********************************************************************************************************/
+/***********************************************************************************************************/
+//处理顶替换的问题，也就是说，有一个顶比上一个顶还高
+//首先判断两个顶之接是否存在一个底，这个底比上一个底还低，并且这个底和新顶之间能直接形成一笔
+//最后一个参数如果形成的话，i的值是要改变的
+
+//处理顶顶替换的问题
+int Handle_Top_Top_Replace(KLine* ks, int DataLen, int nOldTop, int nNewTop, int *Outi)
 {
-	//由于已经清理掉nlowDFX这个底分型的标志位，往前找上一顶分型
-	int n = nlowDFX;
-	while(n)
+	if(nNewTop - nOldTop < 5)
 	{
-		n--;
-		if(n <= 0)
-		{
-			break;
-		}
-
-		if(ks[n].prop == 1)
-		{
-			int TopIndex = n;
-			for(int k = n+1; k < nhighDFX; k++)
-			{
-				//从上个顶分型找起，找到先在这个底分型，找到最高点，然后把最高点替换之前的顶分型，再把顶分型的后面的k先索引返回去再重新搜索
-				if(ks[k].high >= ks[TopIndex].high && ks[k].Ext.nDirector != -1)
-				{
-					TopIndex = k;
-				}
-			}
-
-			if(TopIndex != n)
-			{
-				ks[n].prop = 0;
-				ks[TopIndex].prop = 1;
-				//ks[TopIndex].Ext.nMegre = 0;
-				*Outi = TopIndex+2;
-			}
-			else
-			{
-				ks[nhighDFX].prop = -1;
-				ks[nhighDFX].Ext.nProp = -1;
-			}
-			return;
-
-		}
-		else if(ks[n].prop == -1)
-		{
-			return;
-		}
+		return 0;
 	}
-}
 
-void Handle_Right_TFX_Dayu_Left_TFX(KLine* ks, int nlowDFX, int nhighDFX, int *Outi)
-{
-	//由于已经清理掉nlowTFX这个顶分型的标志位，往前找上一底分型
-	int n = nlowDFX;
-	while(n)
+	int nLastBottom = 0;
+	//先找到上一个底的位置
+	for(int n = nOldTop - 1; n > 0 ; n--)
 	{
-		n--;
-		if(n <= 0)
-		{
-			break;
-		}
-
 		if(ks[n].prop == -1)
 		{
-			int TopIndex = n;
-			for(int k = n+1; k < nhighDFX; k++)
+			nLastBottom = n;
+			break ;
+		}
+	}
+
+	if(nLastBottom == 0)
+	{
+		return 0;
+	}
+
+	//然后再找是否有1笔 低于上一个底，如果有，则再判断是否这笔和新顶直接是否是一笔
+	for(int n = nOldTop + 1; n < nNewTop; n++)
+	{
+		if(ks[n].low < ks[nLastBottom].low && ks[n].Ext.nDirector == DOWN)//这是，这一笔的方向肯定是向下的
+		{
+			for(int k = n+1; k < nNewTop; k++)
 			{
-				//从上个顶分型找起，找到先在这个底分型，找到最高点，然后把最高点替换之前的顶分型，再把顶分型的后面的k先索引返回去再重新搜索
-				if(ks[k].low <= ks[TopIndex].low && ks[k].Ext.nDirector != -1)
+				//找到一个方向向上的
+				if(ks[k].Ext.nDirector == UP)
 				{
-					TopIndex = k;
+					//然后再判断，这个点和新顶之间是否是一笔
+					if(bIsOne_Open_Up_NewOpen(ks, k-1, nNewTop) == TRUE)
+					{
+						//首先清掉k-1到 nNewTop+1之间的prop标志位，避免引入新的问题
+						for(int j = k-1; j <= nNewTop+1; j++)
+						{
+							ks[j].prop = 0;
+							ks[j].Ext.nProp = 0;
+						}
+
+						//然后在把 k-1 点的 nProp标准为新底， 把 nOldTop 的顶标志去掉， nLastBottom的底标志去掉，i的值改变
+						ks[nOldTop].prop = 0;
+						ks[nOldTop].Ext.nProp = 0;
+						ks[nLastBottom].prop = 0;
+						ks[nLastBottom].Ext.nProp = 0;
+
+						ks[k-1].prop = -1;
+						ks[k-1].Ext.nProp = 0;
+						*Outi = k;
+						return 0;
+					}
+					n = k;
+					break;
 				}
 			}
-
-			if(TopIndex != n)
-			{
-				ks[n].prop = 0;
-				ks[TopIndex].prop = -1;
-				//ks[TopIndex].Ext.nMegre = 0;
-				*Outi = TopIndex+2;
-			}
-			else
-			{
-				ks[nhighDFX].prop = 1;
-				ks[nhighDFX].Ext.nProp = 1;
-			}
-			return;
 		}
-		else if(ks[n].prop == 1)
+	}
+
+	//走到这里，说明可以成功的新顶换旧顶
+	ks[nOldTop].prop = 0;
+	ks[nOldTop].Ext.nProp = 0;
+	ks[nNewTop].prop = 1;
+	ks[nNewTop].Ext.nProp = 1;
+
+	//然后再处理缺口的问题，新顶替换旧顶后如果存在缺口的问题,缺口问题还是够烦的，
+	if(g_orgKs[nNewTop+1].high < g_orgKs[nLastBottom].low)
+	{
+		if((g_orgKs[nNewTop].low - g_orgKs[nNewTop+1].high) > (g_orgKs[nNewTop].high - g_orgKs[nLastBottom].low))
 		{
-			return;
+			ks[nNewTop+1].prop = -1;
+		}
+	}
+
+}
+
+
+//处理底底替换的问题
+int Handle_Bottom_Bottom_Replace(KLine* ks, int DataLen, int nOldBottom, int nNewBottom, int *Outi)
+{
+	if(nNewBottom - nOldBottom < 5)
+	{
+		return 0;
+	}
+
+	int nLastTop = 0;
+	//先找到上一个顶的位置
+	for(int n = nOldBottom - 1; n > 0 ; n--)
+	{
+		if(ks[n].prop == 1)
+		{
+			nLastTop = n;
+			break ;
+		}
+	}
+
+	if(nLastTop == 0)
+	{
+		return 0;
+	}
+
+	//然后再找是否有1笔 高于上一个顶，如果有，则再判断是否这笔和新底直接是否是一笔
+	for(int n = nOldBottom + 1; n < nNewBottom; n++)
+	{
+		if(ks[n].high > ks[nLastTop].high && ks[n].Ext.nDirector == UP)//这是，这一笔的方向肯定是向下的
+		{
+			for(int k = n+1; k < nNewBottom; k++)
+			{
+				//找到一个方向向上的
+				if(ks[k].Ext.nDirector == DOWN)
+				{
+					//然后再判断，这个点和新顶之间是否是一笔
+					if(bIsOne_Open_Down_NewOpen(ks, k-1, nNewBottom) == TRUE)
+					{
+						//首先清掉k-1到 nNewTop+1之间的prop标志位，避免引入新的问题
+						for(int j = k-1; j <= nNewBottom+1; j++)
+						{
+							ks[j].prop = 0;
+							ks[j].Ext.nProp = 0;
+						}
+
+						//然后在把 k-1 点的 nProp标准为新底， 把 nOldTop 的顶标志去掉， nLastBottom的底标志去掉，i的值改变
+						ks[nOldBottom].prop = 0;
+						ks[nOldBottom].Ext.nProp = 0;
+						ks[nLastTop].prop = 0;
+						ks[nLastTop].Ext.nProp = 0;
+
+						ks[k-1].prop = 1;
+						ks[k-1].Ext.nProp = 0;
+						*Outi = k;
+						return 0;
+					}
+					n = k;
+					break;
+				}
+			}
+		}
+	}
+
+	//走到这里，说明可以成功的新底换旧底
+	ks[nOldBottom].prop = 0;
+	ks[nOldBottom].Ext.nProp = 0;
+	ks[nNewBottom].prop = -1;
+	ks[nNewBottom].Ext.nProp = -1;
+
+	//然后再处理缺口的问题，新顶替换旧顶后如果存在缺口的问题,缺口问题还是够烦的，
+	if(g_orgKs[nNewBottom+1].low > g_orgKs[nLastTop].high)
+	{
+		if((g_orgKs[nNewBottom+1].low - g_orgKs[nNewBottom].high ) > (g_orgKs[nLastTop].high - g_orgKs[nNewBottom].low))
+		{
+			ks[nNewBottom+1].prop = 1;
 		}
 	}
 }
+
+
+/***********************************************************************************************************/
+/***********************************************************************************************************/
+
 
 //找上一个分型，然后根据传进来的方向，找到这个方向是不是有5个同方向的来确定分型
 int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Outi)
@@ -1126,31 +1206,28 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 					}
 					else
 					{
+						Handle_Top_Top_Replace(ks, DataLen, n, i, Outi);
 						//左边的没有右边的高，清掉左边的
-						ks[n].prop = 0;
-						ks[n].Ext.nProp = 0;
+						//ks[n].prop = 0;
+						//ks[n].Ext.nProp = 0;
 
-						ks[i].prop = 1;      //暂时先去掉
-						ks[i].Ext.nProp = 1; //暂时先去掉
+						//ks[i].prop = 1;      //暂时先去掉
+						//ks[i].Ext.nProp = 1; //暂时先去掉
 
-						//这里也要做一次分型缺口的判断，就是如果缺口类型在分型的时候，就要判断
-						//顺便在这里做一下缺口的处理，如果ks[nhigh+1]和ks[nhigh]有个大缺口，即已经构成了一笔，的情况下
-						//(这个代码在bIsOne_Open_Up_NewOpen就有的)
-						//先找到底分型
-						for (int kkk = n; kkk > 0; kkk--)
-						{
-							if(ks[kkk].prop == -1)
-							{
-								if(g_orgKs[i+1].high < g_orgKs[kkk].low)
-								{
-									if((g_orgKs[i].low - g_orgKs[i+1].high) > (g_orgKs[i].high - g_orgKs[kkk].low))
-									{
-										ks[i+1].prop = -1;
-									}
-								}
-								break;
-							}
-						}
+						//for (int kkk = n; kkk > 0; kkk--)
+						//{
+						//	if(ks[kkk].prop == -1)
+						//	{
+						//		if(g_orgKs[i+1].high < g_orgKs[kkk].low)
+						//		{
+						//			if((g_orgKs[i].low - g_orgKs[i+1].high) > (g_orgKs[i].high - g_orgKs[kkk].low))
+						//			{
+						//				ks[i+1].prop = -1;
+						//			}
+						//		}
+						//		break;
+						//	}
+						//}
 						return 0;
 					}
 				}
@@ -1221,31 +1298,28 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 					else
 					{
 						//左边的没有右边的低，清掉左边的
-						ks[n].prop = 0;
-						ks[n].Ext.nProp = 0;
+						Handle_Bottom_Bottom_Replace(ks, DataLen, n, i, Outi);
 
-						ks[i].prop = -1;
-						ks[i].Ext.nProp = -1;
+						//ks[n].prop = 0;
+						//ks[n].Ext.nProp = 0;
 
+						//ks[i].prop = -1;
+						//ks[i].Ext.nProp = -1;
 
-						//这里也要做一次分型缺口的判断，就是如果缺口类型在分型的时候，就要判断
-						//顺便在这里做一下缺口的处理，如果ks[nhigh+1]和ks[nhigh]有个大缺口，即已经构成了一笔，的情况下
-						//(这个代码在bIsOne_Open_Up_NewOpen就有的)
-						//先找到底分型
-						for (int kkk = n; kkk > 0; kkk--)
-						{
-							if(ks[kkk].prop == 1)  //这个时候是kkk的顶分型
-							{
-								if(g_orgKs[i+1].low > g_orgKs[kkk].high)
-								{
-									if((g_orgKs[i+1].low - g_orgKs[i].high) > (g_orgKs[kkk].high - g_orgKs[i].low))
-									{
-										ks[i+1].prop = 1;
-									}
-								}
-								break;
-							}
-						}
+						//for (int kkk = n; kkk > 0; kkk--)
+						//{
+						//	if(ks[kkk].prop == 1)  //这个时候是kkk的顶分型
+						//	{
+						//		if(g_orgKs[i+1].low > g_orgKs[kkk].high)
+						//		{
+						//			if((g_orgKs[i+1].low - g_orgKs[i].high) > (g_orgKs[kkk].high - g_orgKs[i].low))
+						//			{
+						//				ks[i+1].prop = 1;
+						//			}
+						//		}
+						//		break;
+						//	}
+						//}
 						return 0;
 					}
 				}
@@ -3979,7 +4053,7 @@ BOOL ZhongShuAnalu_BeiLi()
 				{
 					if(nCount <= 1)
 					{
-						return FALSE;
+						//return FALSE;
 					}
 					bChongDie = TRUE;
 				}
@@ -4014,7 +4088,7 @@ BOOL ZhongShuAnalu_BeiLi()
 				{
 					if(nCount <= 1)
 					{
-						return FALSE;
+						//return FALSE;
 					}
 					bChongDie = TRUE;
 				}
