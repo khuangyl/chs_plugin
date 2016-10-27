@@ -1206,28 +1206,28 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 					}
 					else
 					{
-						Handle_Top_Top_Replace(ks, DataLen, n, i, Outi);
+						//Handle_Top_Top_Replace(ks, DataLen, n, i, Outi);
 						//左边的没有右边的高，清掉左边的
-						//ks[n].prop = 0;
-						//ks[n].Ext.nProp = 0;
+						ks[n].prop = 0;
+						ks[n].Ext.nProp = 0;
 
-						//ks[i].prop = 1;      //暂时先去掉
-						//ks[i].Ext.nProp = 1; //暂时先去掉
+						ks[i].prop = 1;      //暂时先去掉
+						ks[i].Ext.nProp = 1; //暂时先去掉
 
-						//for (int kkk = n; kkk > 0; kkk--)
-						//{
-						//	if(ks[kkk].prop == -1)
-						//	{
-						//		if(g_orgKs[i+1].high < g_orgKs[kkk].low)
-						//		{
-						//			if((g_orgKs[i].low - g_orgKs[i+1].high) > (g_orgKs[i].high - g_orgKs[kkk].low))
-						//			{
-						//				ks[i+1].prop = -1;
-						//			}
-						//		}
-						//		break;
-						//	}
-						//}
+						for (int kkk = n; kkk > 0; kkk--)
+						{
+							if(ks[kkk].prop == -1)
+							{
+								if(g_orgKs[i+1].high < g_orgKs[kkk].low)
+								{
+									if((g_orgKs[i].low - g_orgKs[i+1].high) > (g_orgKs[i].high - g_orgKs[kkk].low))
+									{
+										ks[i+1].prop = -1;
+									}
+								}
+								break;
+							}
+						}
 						return 0;
 					}
 				}
@@ -1298,28 +1298,28 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 					else
 					{
 						//左边的没有右边的低，清掉左边的
-						Handle_Bottom_Bottom_Replace(ks, DataLen, n, i, Outi);
+						//Handle_Bottom_Bottom_Replace(ks, DataLen, n, i, Outi);
 
-						//ks[n].prop = 0;
-						//ks[n].Ext.nProp = 0;
+						ks[n].prop = 0;
+						ks[n].Ext.nProp = 0;
 
-						//ks[i].prop = -1;
-						//ks[i].Ext.nProp = -1;
+						ks[i].prop = -1;
+						ks[i].Ext.nProp = -1;
 
-						//for (int kkk = n; kkk > 0; kkk--)
-						//{
-						//	if(ks[kkk].prop == 1)  //这个时候是kkk的顶分型
-						//	{
-						//		if(g_orgKs[i+1].low > g_orgKs[kkk].high)
-						//		{
-						//			if((g_orgKs[i+1].low - g_orgKs[i].high) > (g_orgKs[kkk].high - g_orgKs[i].low))
-						//			{
-						//				ks[i+1].prop = 1;
-						//			}
-						//		}
-						//		break;
-						//	}
-						//}
+						for (int kkk = n; kkk > 0; kkk--)
+						{
+							if(ks[kkk].prop == 1)  //这个时候是kkk的顶分型
+							{
+								if(g_orgKs[i+1].low > g_orgKs[kkk].high)
+								{
+									if((g_orgKs[i+1].low - g_orgKs[i].high) > (g_orgKs[kkk].high - g_orgKs[i].low))
+									{
+										ks[i+1].prop = 1;
+									}
+								}
+								break;
+							}
+						}
 						return 0;
 					}
 				}
