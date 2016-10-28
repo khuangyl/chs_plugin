@@ -8,7 +8,7 @@
 using namespace std;
 
 #define TMPFILE "D:\\tdx_tmp.txt"
-#define LOGMAIN "D:\\log_main.txt" 
+#define LOGMAIN "D:\\log_main.txt"
 
 
 
