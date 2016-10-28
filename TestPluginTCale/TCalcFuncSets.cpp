@@ -1323,10 +1323,10 @@ BOOL bIsOne_Open_Down(KLine* ks, int nlow, int nhigh)
 //处理顶顶替换的问题
 int Handle_Top_Top_Replace(KLine* ks, int DataLen, int nOldTop, int nNewTop, int *Outi)
 {
-	if(nNewTop - nOldTop < 5)
-	{
-		return 0;
-	}
+	//if(nNewTop - nOldTop < 5)
+	//{
+	//	return 0;
+	//}
 
 	int nLastBottom = 0;
 	//先找到上一个底的位置
@@ -1339,8 +1339,21 @@ int Handle_Top_Top_Replace(KLine* ks, int DataLen, int nOldTop, int nNewTop, int
 		}
 	}
 
-	if(nLastBottom == 0)
+	if(nNewTop - nOldTop < 5 || nLastBottom == 0 )
 	{
+		ks[nOldTop].prop = 0;
+		ks[nOldTop].Ext.nProp = 0;
+		ks[nNewTop].prop = 1;
+		ks[nNewTop].Ext.nProp = 1;
+
+		//然后再处理缺口的问题，新顶替换旧顶后如果存在缺口的问题,缺口问题还是够烦的，
+		if(g_orgKs[nNewTop+1].high < g_orgKs[nLastBottom].low)
+		{
+			if((g_orgKs[nNewTop].low - g_orgKs[nNewTop+1].high) > (g_orgKs[nNewTop].high - g_orgKs[nLastBottom].low))
+			{
+				ks[nNewTop+1].prop = -1;
+			}
+		}
 		return 0;
 	}
 
@@ -1403,10 +1416,10 @@ int Handle_Top_Top_Replace(KLine* ks, int DataLen, int nOldTop, int nNewTop, int
 //处理底底替换的问题
 int Handle_Bottom_Bottom_Replace(KLine* ks, int DataLen, int nOldBottom, int nNewBottom, int *Outi)
 {
-	if(nNewBottom - nOldBottom < 5)
-	{
-		return 0;
-	}
+	//if(nNewBottom - nOldBottom < 5)
+	//{
+	//	return 0;
+	//}
 
 	int nLastTop = 0;
 	//先找到上一个顶的位置
@@ -1419,8 +1432,20 @@ int Handle_Bottom_Bottom_Replace(KLine* ks, int DataLen, int nOldBottom, int nNe
 		}
 	}
 
-	if(nLastTop == 0)
+	if(nNewBottom - nOldBottom < 5 || nLastTop == 0)
 	{
+		ks[nOldBottom].prop = 0;
+		ks[nOldBottom].Ext.nProp = 0;
+		ks[nNewBottom].prop = -1;
+		ks[nNewBottom].Ext.nProp = -1;
+		//然后再处理缺口的问题，新顶替换旧顶后如果存在缺口的问题,缺口问题还是够烦的，
+		if(g_orgKs[nNewBottom+1].low > g_orgKs[nLastTop].high)
+		{
+			if((g_orgKs[nNewBottom+1].low - g_orgKs[nNewBottom].high ) > (g_orgKs[nLastTop].high - g_orgKs[nNewBottom].low))
+			{
+				ks[nNewBottom+1].prop = 1;
+			}
+		}
 		return 0;
 	}
 
@@ -1519,7 +1544,8 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 					}
 					else
 					{
-						//Handle_Top_Top_Replace(ks, DataLen, n, i, Outi);
+						Handle_Top_Top_Replace(ks, DataLen, n, i, Outi);
+						return 0;
 						//左边的没有右边的高，清掉左边的
 						ks[n].prop = 0;
 						ks[n].Ext.nProp = 0;
@@ -1611,8 +1637,8 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 					else
 					{
 						//左边的没有右边的低，清掉左边的
-						//Handle_Bottom_Bottom_Replace(ks, DataLen, n, i, Outi);
-
+						Handle_Bottom_Bottom_Replace(ks, DataLen, n, i, Outi);
+						return 0;
 						ks[n].prop = 0;
 						ks[n].Ext.nProp = 0;
 
@@ -1763,16 +1789,16 @@ void TestPlugin3(int DataLen,float* Out,float* High,float* Low, float* TIME/*flo
 		KLine curr_k=ks[i];
 		KLine last=ks[i-1];
 
-		if(curr_k.high >= 18.619 && 
-			curr_k.high < 18.621 &&
-			curr_k.low >= 18.619   &&
-			curr_k.low <  18.621)
+		if(curr_k.high >= 57.269 && 
+			curr_k.high < 57.271 &&
+			curr_k.low >= 56.569   &&
+			curr_k.low <  56.571)
 		{
 
-		if(ks[i+1].high >= 19.609 && 
-			ks[i+1].high < 19.611 &&
-			ks[i+1].low >= 18.999   &&
-			ks[i+1].low <  19.001)
+		if(ks[i+1].high >= 57.369 && 
+			ks[i+1].high < 57.371 &&
+			ks[i+1].low >= 56.599   &&
+			ks[i+1].low <  56.601)
 			{
 				if(IsDebuggerPresent() == TRUE)
 				{
@@ -3346,7 +3372,7 @@ int Lookup_Next_XianDuan_EX(Bi_Line *Bl, int nStartk, int nLen)
 								int j = k+1;
 								//for (int j = nStartk+2*k+1; j <= npos; j++)
 								BOOL bFlagRet = FALSE;
-								for (; nStartk+2*j <= npos; j++)//chsgggai
+								for (; nStartk+2*j < npos; j++)//chsgggai
 								{
 									//如果有点低于某个笔的点低于拐点的前一个点，也能构成
 									if(Bl[nStartk+2*j].PointLow.fVal < Bl[nreal_gd].PointLow.fVal)//chsgggai
