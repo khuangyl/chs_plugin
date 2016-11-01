@@ -4477,3 +4477,133 @@ BOOL ZhongShuAnaly_YuCe()
 	OutputDebugStringA("[chs] 离开 ZhongShuAnalu_BeiLi");
 	return FALSE;
 }
+
+
+
+//对中枢进行分析，预测后面的走势
+BOOL ZhongShuAnaly_TuPo()
+{
+
+	OutputDebugStringA("[chs] ZhongShuAnaly_TuPo");
+	std::vector<ZhongShuData> g_vecZhongshu;
+
+	BOOL bFlag = FALSE;
+
+	ZhongShuData ZSData;
+
+	float fkk_max;
+	float fkk_min;
+
+	for (int n = 0; n < nSize_xd_l; n++)
+	{
+		if(g_xd_l[n].XianDuan_nprop == 1)
+		{
+			bFlag = TRUE;
+			ZSData.fMax = g_xd_l[n].fMax;
+			ZSData.fMin = g_xd_l[n].fMin;
+
+			ZSData.nXDStart_Index = n;
+			ZSData.nXDStart_Before_Index = n-1;
+
+			fkk_max = g_xd_l[n].PointHigh.fVal;
+			fkk_min = g_xd_l[n].PointLow.fVal;
+			//起点，找最左边的的
+			if(g_xd_l[n].PointHigh.nIndex < g_xd_l[n].PointLow.nIndex)
+			{
+				ZSData.nIn_Index = g_xd_l[n].PointHigh.nIndex;
+				ZSData.fIn_Price = g_xd_l[n].PointHigh.fVal;
+
+			}
+			else
+			{
+				ZSData.nIn_Index = g_xd_l[n].PointLow.nIndex;
+				ZSData.fIn_Price = g_xd_l[n].PointLow.fVal;
+
+			}
+		}
+
+		if(g_xd_l[n].XianDuan_nprop == 2)
+		{
+			bFlag = FALSE;
+			fkk_max = max(fkk_max, g_xd_l[n].PointHigh.fVal);
+			fkk_min = min(fkk_min, g_xd_l[n].PointLow.fVal);
+
+			ZSData.fkk_Max = fkk_max;
+			ZSData.fkk_Min = fkk_min;
+
+			//
+			ZSData.nXDEnd_Index = n;
+
+			//起点，找最左边的的
+			if(g_xd_l[n].PointHigh.nIndex > g_xd_l[n].PointLow.nIndex)
+			{
+				ZSData.nOut_Index = g_xd_l[n].PointHigh.nIndex;
+				ZSData.fOut_Price = g_xd_l[n].PointHigh.fVal;
+			}
+			else
+			{
+				ZSData.nOut_Index = g_xd_l[n].PointLow.nIndex;
+				ZSData.fOut_Price = g_xd_l[n].PointLow.fVal;
+			}
+
+			g_vecZhongshu.push_back(ZSData);
+		}
+
+		if(bFlag == TRUE)
+		{
+			fkk_max = max(fkk_max, g_xd_l[n].PointHigh.fVal);
+			fkk_min = min(fkk_min, g_xd_l[n].PointLow.fVal);
+		}
+	}
+
+	//数据收集完毕以后，开始分析
+	int nSize = g_vecZhongshu.size();
+
+	if(nSize > 2)
+	{
+		std::vector<Pair_Data>  pairdata;
+		//找到上一个中枢，如果不是向上的，并且没有中枢重叠的话就直接退出
+
+		ZSData = g_vecZhongshu[nSize-1];
+
+		int nCount = 0; //计数，有多少重是不重叠
+		for (int n = nSize-2; n >= 0; n--)
+		{
+			BOOL bChongDie = FALSE;
+			if(g_vecZhongshu[n].fMax < ZSData.fMin)
+			{
+				if(g_vecZhongshu[n].fkk_Max > ZSData.fkk_Min)
+				{
+					return FALSE;
+					bChongDie = TRUE;
+				}
+				else
+				{
+					Pair_Data pd;
+					pd.d1 = g_vecZhongshu[n];
+					pd.d2 = ZSData;
+
+					//pairdata.push_back(pd);
+					
+					if(pd.d1.nXDEnd_Index - pd.d1.nXDStart_Index >= 12)
+					{
+						return TRUE;
+					}
+					
+					
+					return FALSE;
+					
+				}
+			}
+			else
+			{
+				return FALSE;//直接返回条件比较严格
+			}
+		}
+
+		
+	}
+
+	OutputDebugStringA("[chs] 离开 ZhongShuAnalu_BeiLi");
+	return FALSE;
+}

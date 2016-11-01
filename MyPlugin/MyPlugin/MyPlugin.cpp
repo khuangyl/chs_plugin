@@ -100,7 +100,8 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 	char sztmp[128] = {0};
 	sprintf(sztmp, "[chs] Code=%s", Code);
 
-	if(strcmp(Code, "600119") == 0 || strcmp(Code, "300107") == 0)
+	//if(strcmp(Code, "600119") == 0 || strcmp(Code, "300107") == 0)
+	if(strcmp(Code, "300372") == 0 )
 	{
 		return FALSE;
 	}
@@ -140,8 +141,17 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 	}
 	else if(DataType == PER_DAY)
 	{
-		//日k 暂时没有选股的
-		return FALSE;
+		//1分钟 //小时线只预测找出中枢上突破的模型
+		if(nSetCode == 0)
+		{
+			//深市
+			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sz\\minline\\sz%s.lc1", Code);
+		}
+		else
+		{
+			//沪市
+			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sh\\minline\\sh%s.lc1", Code);
+		}
 	}
 
 	{
@@ -171,12 +181,6 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 		float *pLow = new float[nCount];
 
 		char *pbuf = szBuff;
-		//if(nCount > 6000)
-		//{
-		//	int nStart = nCount - 6000;
-		//	pbuf = szBuff + nStart*32;
-		//	nCount = 6000;
-		//}
 
 		for (int n = 0; n < nCount; n++)
 		{
@@ -197,11 +201,21 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 			pbuf = pbuf + 32;
 		}
 
+		float *pLowEx  = pLow;
+		float *pHighEx = pHigh;
+		//if(nCount > 15000)
+		//{
+		//	int nRemain = nCount - 15000;
+		//	pLowEx = (float *)((char*)pLow + nRemain * 4);
+		//	pHighEx = (float *)((char*)pHigh + nRemain * 4);
+		//	nCount = 15000;
+		//}
+
 		__try
 		{
-			TestPlugin3( nCount, pHigh, pLow);
-			TestPlugin4( nCount, pHigh, pLow);
-			TestPlugin5( nCount, pHigh, pLow);
+			TestPlugin3( nCount, pHighEx, pLowEx);
+			TestPlugin4( nCount, pHighEx, pLowEx);
+			TestPlugin5( nCount, pHighEx, pLowEx);
 
 			BOOL bRet = FALSE;
 			
@@ -220,6 +234,10 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 			{
 				//1个小时是预测的
 				bRet = ZhongShuAnaly_YuCe();
+			}
+			else if(DataType == PER_DAY)
+			{
+				bRet = ZhongShuAnaly_TuPo();
 			}
 
 
