@@ -587,6 +587,10 @@ BOOL bIsOne_Open_Up_NewOpen(KLine* ks, int nlow, int nhigh)
 	{
 		return FALSE;
 	}
+	else if(kh1 == 0)
+	{
+		return FALSE;
+	}
 
 
 	if(isUp(ks[kl1], ks[kh1]) == UP)
@@ -651,6 +655,10 @@ BOOL bIsOne_Open_Down_NewOpen(KLine* ks, int nlow, int nhigh)
 		return FALSE;
 	}
 	else if(kh1 + 1 == kl1)
+	{
+		return FALSE;
+	}
+	else if(kl1 == 0)
 	{
 		return FALSE;
 	}
