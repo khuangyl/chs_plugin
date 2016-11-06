@@ -893,7 +893,7 @@ BOOL bIsOne_Open_Up_NewOpen(KLine* ks, int nlow, int nhigh)
 	}
 	
 
-	if(kl1 == kh1)
+	if(kl1 == kh1 )
 	{
 		return FALSE;
 	}
@@ -901,7 +901,10 @@ BOOL bIsOne_Open_Up_NewOpen(KLine* ks, int nlow, int nhigh)
 	{
 		return FALSE;
 	}
-
+	else if(kh1 == 0)
+	{
+		return FALSE;
+	}
 
 	if(isUp(ks[kl1], ks[kh1]) == UP)
 	{
@@ -965,6 +968,10 @@ BOOL bIsOne_Open_Down_NewOpen(KLine* ks, int nlow, int nhigh)
 		return FALSE;
 	}
 	else if(kh1 + 1 == kl1)
+	{
+		return FALSE;
+	}
+	else if(kl1 == 0)
 	{
 		return FALSE;
 	}
@@ -1789,16 +1796,16 @@ void TestPlugin3(int DataLen,float* Out,float* High,float* Low, float* TIME/*flo
 		KLine curr_k=ks[i];
 		KLine last=ks[i-1];
 
-		if(curr_k.high >= 57.269 && 
-			curr_k.high < 57.271 &&
-			curr_k.low >= 56.569   &&
-			curr_k.low <  56.571)
+		if(curr_k.high >= 17.889 && 
+			curr_k.high < 17.891 &&
+			curr_k.low >= 17.759   &&
+			curr_k.low <  17.761)
 		{
 
-		if(ks[i+1].high >= 57.369 && 
-			ks[i+1].high < 57.371 &&
-			ks[i+1].low >= 56.599   &&
-			ks[i+1].low <  56.601)
+		if(ks[i+1].high >= 17.819 && 
+			ks[i+1].high < 17.821 &&
+			ks[i+1].low >= 17.699   &&
+			ks[i+1].low <  17.701)
 			{
 				if(IsDebuggerPresent() == TRUE)
 				{
