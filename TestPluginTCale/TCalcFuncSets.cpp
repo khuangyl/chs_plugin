@@ -1544,7 +1544,7 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 				if(ks[n].prop == 1)//顶分型
 				{
 					//顶分型标志位, 不符合现在找的目标，两个顶分型做对比
-					if(k1.high >= k2.high)
+					if(k1.high > k2.high)
 					{
 						//左边的比右边的高,直接返回
 						return 0;
@@ -1636,7 +1636,7 @@ int Handle_FenXing(KLine* ks, int DataLen, int i, KDirection Direction, int *Out
 				if(ks[n].prop == -1)//底分型
 				{
 					//底分型标志位, 不符合现在找的目标，两个底分型做对比
-					if(k1.low <= k2.low)
+					if(k1.low < k2.low)
 					{
 						//左边的比右边的低,直接返回
 						return 0;
