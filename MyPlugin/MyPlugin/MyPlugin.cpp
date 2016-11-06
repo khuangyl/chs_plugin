@@ -110,7 +110,7 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 	
 	char szPath[MAX_PATH] = {0};
 
-	if(DataType == PER_MIN5 || DataType == PER_HOUR)//1小时的就是预测5分钟
+	if(DataType == PER_MIN5 || DataType == PER_HOUR || DataType == PER_WEEK)//1小时的就是预测5分钟
 	{
 		//5分钟
 		if(nSetCode == 0)
@@ -125,7 +125,7 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 
 		}
 	}
-	else if(DataType == PER_MIN1 || DataType == PER_MIN30)//30分钟就是预测1分钟
+	else if(DataType == PER_MIN1 || DataType == PER_MIN30 || DataType == PER_DAY)//30分钟就是预测1分钟
 	{
 		//1分钟
 		if(nSetCode == 0)
@@ -139,21 +139,7 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sh\\minline\\sh%s.lc1", Code);
 		}
 	}
-	else if(DataType == PER_DAY)
-	{
-		//1分钟 //小时线只预测找出中枢上突破的模型
-		if(nSetCode == 0)
-		{
-			//深市
-			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sz\\minline\\sz%s.lc1", Code);
-		}
-		else
-		{
-			//沪市
-			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sh\\minline\\sh%s.lc1", Code);
-		}
-	}
-
+	
 	{
 		char szTempp[MAX_PATH] = {0};
 		sprintf(szTempp, "[chs] szPath=%s", szPath);
@@ -236,6 +222,10 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 				bRet = ZhongShuAnaly_YuCe();
 			}
 			else if(DataType == PER_DAY)
+			{
+				bRet = ZhongShuAnaly_TuPo();
+			}
+			else if(DataType == PER_WEEK)
 			{
 				bRet = ZhongShuAnaly_TuPo();
 			}
