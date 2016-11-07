@@ -200,13 +200,13 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 
 		float *pLowEx  = pLow;
 		float *pHighEx = pHigh;
-		//if(nCount > 20000)
-		//{
-		//	int nRemain = nCount - 20000;
-		//	pLowEx = (float *)((char*)pLow + nRemain * 4);
-		//	pHighEx = (float *)((char*)pHigh + nRemain * 4);
-		//	nCount = 20000;
-		//}
+		if(nCount > 20000)
+		{
+			int nRemain = nCount - 20000;
+			pLowEx = (float *)((char*)pLow + nRemain * 4);
+			pHighEx = (float *)((char*)pHigh + nRemain * 4);
+			nCount = 20000;
+		}
 
 		__try
 		{
@@ -234,11 +234,11 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 			}
 			else if(DataType == PER_DAY)
 			{
-				bRet = ZhongShuAnaly_TuPo();//1分钟的日k用有中枢重叠的
+				bRet = ZhongShuAnaly_ThreeBuy();//1分钟的三买
 			}
 			else if(DataType == PER_WEEK)
 			{
-				bRet = ZhongShuAnaly_TuPo(); //5分钟的周k用没有中枢重叠的
+				bRet = ZhongShuAnaly_ThreeBuy(); //5分钟的三买
 			}
 
 
