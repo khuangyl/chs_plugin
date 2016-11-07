@@ -25,6 +25,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 PDATAIOFUNC	 g_pFuncCallBack;
 
+BOOL Handle30MinData(char * Code, short nSetCode, short DataType);
 //获取回调函数
 void RegisterDataInterface(PDATAIOFUNC pfn)
 {
@@ -70,7 +71,8 @@ PriceMap g_mapPrice[] =
 	{16,  0x41800000, 0x80000},
 	{32,  0x42000000, 0x40000},
 	{64,  0x42800000, 0x20000},
-	{128, 0x43000000, 0x10000}
+	{128, 0x43000000, 0x10000},
+	{256, 0x43800000, 0x8000}
 };
 
 float GetRealPrice(DWORD dwOrgPrice)
@@ -97,6 +99,13 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 			//__asm int 3
 		}
 	}
+
+	if(PER_MONTH == DataType)
+	{
+		//月线已经给30分钟的数据占用了，因为30分钟的数据不能直接有，所以需要
+		return Handle30MinData(Code, nSetCode, DataType);
+	}
+
 	char sztmp[128] = {0};
 	sprintf(sztmp, "[chs] Code=%s", Code);
 
@@ -173,7 +182,7 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 			float f8 = GetRealPrice((*(DWORD*)&pbuf[8]));//最高价
 			float f12 = GetRealPrice((*(DWORD*)&pbuf[12]));//最低价
 			
-			if(f8 > 256)
+			if(f8 > 512)
 			{
 				delete[] szBuff;
 				delete[] pHigh;
@@ -189,12 +198,12 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 
 		float *pLowEx  = pLow;
 		float *pHighEx = pHigh;
-		//if(nCount > 15000)
+		//if(nCount > 20000)
 		//{
-		//	int nRemain = nCount - 15000;
+		//	int nRemain = nCount - 20000;
 		//	pLowEx = (float *)((char*)pLow + nRemain * 4);
 		//	pHighEx = (float *)((char*)pHigh + nRemain * 4);
-		//	nCount = 15000;
+		//	nCount = 20000;
 		//}
 
 		__try
@@ -223,11 +232,11 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 			}
 			else if(DataType == PER_DAY)
 			{
-				bRet = ZhongShuAnaly_TuPo();
+				bRet = ZhongShuAnaly_TuPo();//1分钟的日k用有中枢重叠的
 			}
 			else if(DataType == PER_WEEK)
 			{
-				bRet = ZhongShuAnaly_TuPo();
+				bRet = ZhongShuAnaly_TuPo(); //5分钟的周k用没有中枢重叠的
 			}
 
 
@@ -268,4 +277,165 @@ BOOL InputInfoThenCalc2(char * Code,short nSetCode,int Value[4],short DataType,N
 	BOOL nRet = FALSE;
 	
 	return nRet;
+}
+
+
+//--------------------------------------------------------30分钟的处理-------------------------------------------------------------------
+//由于30分钟没有直接的数据，所以需要把5分钟的数据，经过合并得到30分钟的数据
+
+BOOL Handle30MinData(char * Code, short nSetCode, short DataType)
+{
+	char sztmp[128] = {0};
+	sprintf(sztmp, "[chs] Code=%s", Code);
+
+	if(strcmp(Code, "300372") == 0 )
+	{
+		return FALSE;
+	}
+	OutputDebugStringA(sztmp);
+	BOOL nRet = FALSE;
+
+	char szPath[MAX_PATH] = {0};
+
+	if(DataType == PER_MONTH)//1小时的就是预测5分钟
+	{
+		//5分钟
+		if(nSetCode == 0)
+		{
+			//深市
+			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sz\\fzline\\sz%s.lc5", Code);
+		}
+		else
+		{
+			//沪市
+			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sh\\fzline\\sh%s.lc5", Code);
+
+		}
+	}
+	
+
+	{
+		char szTempp[MAX_PATH] = {0};
+		sprintf(szTempp, "[chs] szPath=%s", szPath);
+		OutputDebugStringA(szTempp);
+	}
+
+
+	HANDLE hFile = CreateFile(szPath,GENERIC_READ, FILE_SHARE_READ,NULL, OPEN_EXISTING, FILE_ATTRIBUTE_ARCHIVE, NULL);
+
+	if(hFile != INVALID_HANDLE_VALUE)
+	{
+		DWORD dwHigh = 0;
+		DWORD dwSize = GetFileSize(hFile, &dwHigh);
+
+		char *szBuff  = new char[dwSize];
+
+		DWORD dwOut = 0;
+		ReadFile(hFile, szBuff, dwSize, &dwOut, NULL);
+
+		int nCount = dwSize/32;
+
+
+
+		float *pHigh = new float[nCount];
+		float *pLow = new float[nCount];
+
+		char *pbuf = szBuff;
+
+		int nnnkkk = 0;//这个才是真正的计数器，5分钟的数据要合并成30分钟的数据就是要这样的
+
+		float fMax = 0;
+		float fMin = 10000.01;
+
+		for (int n = 0; n < nCount; n++)
+		{
+			float f8 = GetRealPrice((*(DWORD*)&pbuf[8]));//最高价
+			float f12 = GetRealPrice((*(DWORD*)&pbuf[12]));//最低价
+
+			fMax = max(fMax, f8);
+			fMin = min(fMin, f12);
+
+			//这里获取时间
+			int ntime = (*(WORD*)&pbuf[2])%60;
+			if(ntime == 0 || ntime == 30)
+			{
+				pHigh[nnnkkk] = fMax;
+				pLow[nnnkkk] = fMin;
+				nnnkkk++;
+				
+
+				fMax = 0;
+				fMin = 10000.01;
+			}
+			
+			if(f8 > 512)
+			{
+				delete[] szBuff;
+				delete[] pHigh;
+				delete[] pLow;
+				CloseHandle(hFile);
+				return FALSE;
+			}
+			//pHigh[n] = f8;
+			//pLow[n] = f12;
+
+			pbuf = pbuf + 32;
+		}
+
+		float *pLowEx  = pLow;
+		float *pHighEx = pHigh;
+
+		nCount = nnnkkk;
+		//if(nCount > 20000)
+		//{
+		//	int nRemain = nCount - 20000;
+		//	pLowEx = (float *)((char*)pLow + nRemain * 4);
+		//	pHighEx = (float *)((char*)pHigh + nRemain * 4);
+		//	nCount = 20000;
+		//}
+
+		__try
+		{
+			TestPlugin3( nCount, pHighEx, pLowEx);
+			TestPlugin4( nCount, pHighEx, pLowEx);
+			TestPlugin5( nCount, pHighEx, pLowEx);
+
+			BOOL bRet = FALSE;
+
+			if(DataType == PER_MONTH)
+			{
+				//1分钟
+				bRet = ZhongShuAnalu_BeiLi();
+			}
+
+			CloseHandle(hFile);
+			delete[] szBuff;
+			delete[] pHigh;
+			delete[] pLow;
+			return bRet;
+		}
+		__except(1)
+		{
+			OutputDebugStringA("[chs] 选股的时候出现异常");
+			//if(IsDebuggerPresent())
+			//{
+			//	__asm int 3
+			//}
+			delete[] szBuff;
+			delete[] pHigh;
+			delete[] pLow;
+			CloseHandle(hFile);
+			return FALSE;
+		}
+
+
+	}
+	else
+	{
+		char szbuff[256] = {0};
+		sprintf(szbuff,"[chs] 打不开文件 错误码=%d", GetLastError());
+		OutputDebugStringA(szbuff);
+	}
+
+	return FALSE;
 }

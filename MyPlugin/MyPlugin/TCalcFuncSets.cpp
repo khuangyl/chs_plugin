@@ -3655,6 +3655,7 @@ int AnalyZShu(Xianduan_Line *xd, int nStart, int nLen)
 
 }
 
+int g_nxdlsize = 0;
 
 void TestPlugin5(int DataLen,float* High,float* Low) 
 {
@@ -3665,7 +3666,16 @@ void TestPlugin5(int DataLen,float* High,float* Low)
 		return;
 	}
 
-	g_xd_l = new Xianduan_Line[g_nBlSize];
+	if(g_nxdlsize < g_nBlSize)
+	{
+		if(g_xd_l)
+		{
+			delete[] g_xd_l;
+		}
+		g_xd_l = new Xianduan_Line[g_nBlSize];
+		g_nxdlsize = g_nBlSize;
+	}
+	
 
 	ZeroMemory(g_xd_l, sizeof(Xianduan_Line)*g_nBlSize);
 
@@ -3920,7 +3930,7 @@ BOOL ZhongShuAnalu_BeiLi_5Min()
 			}
 		}
 
-		delete[] g_xd_l;
+		//delete[] g_xd_l;
 
 		//如果有
 		if(nCount >= 2)
@@ -4163,7 +4173,7 @@ BOOL ZhongShuAnalu_BeiLi()
 
 					if(g_xd_l[nXdIndex].Bi_Direction == DOWN)
 					{
-						delete[] g_xd_l;
+						//delete[] g_xd_l;
 						return FALSE;
 					}
 
@@ -4172,14 +4182,14 @@ BOOL ZhongShuAnalu_BeiLi()
 					float fVDist_d2 = pairdata[0].d1.fOut_Price - pairdata[0].d2.fIn_Price;
 					if(fVDist_d1 > fVDist_d2)
 					{
-						delete[] g_xd_l;
+						//delete[] g_xd_l;
 						return TRUE;
 					}
 
 					float fxlv = (g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointHigh.fVal - g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointLow.fVal)/(float)(g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointHigh.nIndex - g_xd_l[pairdata[0].d1.nXDStart_Before_Index].PointLow.nIndex);
 					if(fxlv > pairdata[0].fXieLv)
 					{
-						delete[] g_xd_l;
+						//delete[] g_xd_l;
 						return TRUE;
 					}
 				}
@@ -4216,7 +4226,7 @@ BOOL ZhongShuAnalu_BeiLi()
 
 				if(fVDist_d1 > fVDist_d2)
 				{
-					delete[] g_xd_l;
+					//delete[] g_xd_l;
 					return TRUE;
 				}
 
@@ -4224,7 +4234,7 @@ BOOL ZhongShuAnalu_BeiLi()
 				
 				if(  pairdata[0].fXieLv < pairdata[1].fXieLv /*&& (pairdata[0].d2.nXDEnd_Index - pairdata[0].d2.nXDStart_Index) == 3 */)
 				{
-					delete[] g_xd_l;
+					//delete[] g_xd_l;
 					return TRUE;
 				}
 				
@@ -4233,7 +4243,7 @@ BOOL ZhongShuAnalu_BeiLi()
 		}
 	}
 	
-	delete[] g_xd_l;
+	//delete[] g_xd_l;
 	OutputDebugStringA("[chs] 离开 ZhongShuAnalu_BeiLi");
 	return FALSE;
 }
@@ -4422,7 +4432,7 @@ BOOL ZhongShuAnaly_YuCe()
 					{
 						{
 							return TRUE;
-							delete[] g_xd_l;
+							//delete[] g_xd_l;
 						}
 						
 					}
@@ -4430,7 +4440,7 @@ BOOL ZhongShuAnaly_YuCe()
 				}
 			}	
 
-			delete[] g_xd_l;
+			//delete[] g_xd_l;
 			return FALSE;
 
 
@@ -4747,9 +4757,16 @@ BOOL ZhongShuAnaly_TuPo_1Mini()
 						}
 						else
 						{
+
 							if(ZSData_Temp.nXDEnd_Index - ZSData_Temp.nXDStart_Index >= 12)
 							{
-								return TRUE;
+								if(ZSData_Temp.fkk_Max < ZSData.fkk_Min)
+								{
+									return TRUE;
+								}
+
+
+								
 							}
 						}
 					}
@@ -4769,3 +4786,8 @@ BOOL ZhongShuAnaly_TuPo_1Mini()
 	OutputDebugStringA("[chs] 离开 ZhongShuAnalu_BeiLi");
 	return FALSE;
 }
+
+//--------------------------------------------------------30分钟的处理-------------------------------------------------------------------
+//由于30分钟没有直接的数据，所以需要把5分钟的数据，经过合并得到30分钟的数据
+
+
