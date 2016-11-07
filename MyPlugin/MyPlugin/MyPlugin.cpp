@@ -7,6 +7,8 @@
 #include "TCalcFuncSets.h"
 #define PLUGIN_EXPORTS
 
+char *pDataPath = "D:\\new_zx_allin1";
+
 BOOL APIENTRY DllMain( HANDLE hModule, 
                        DWORD  ul_reason_for_call, 
                        LPVOID lpReserved
@@ -125,12 +127,12 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 		if(nSetCode == 0)
 		{
 			//深市
-			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sz\\fzline\\sz%s.lc5", Code);
+			sprintf(szPath, "%s\\vipdoc\\sz\\fzline\\sz%s.lc5", pDataPath, Code);
 		}
 		else
 		{
 			//沪市
-			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sh\\fzline\\sh%s.lc5", Code);
+			sprintf(szPath, "%s\\vipdoc\\sh\\fzline\\sh%s.lc5", pDataPath, Code);
 
 		}
 	}
@@ -140,12 +142,12 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 		if(nSetCode == 0)
 		{
 			//深市
-			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sz\\minline\\sz%s.lc1", Code);
+			sprintf(szPath, "%s\\vipdoc\\sz\\minline\\sz%s.lc1", pDataPath, Code);
 		}
 		else
 		{
 			//沪市
-			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sh\\minline\\sh%s.lc1", Code);
+			sprintf(szPath, "%s\\vipdoc\\sh\\minline\\sh%s.lc1", pDataPath, Code);
 		}
 	}
 	
@@ -303,12 +305,12 @@ BOOL Handle30MinData(char * Code, short nSetCode, short DataType)
 		if(nSetCode == 0)
 		{
 			//深市
-			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sz\\fzline\\sz%s.lc5", Code);
+			sprintf(szPath, "%s\\vipdoc\\sz\\fzline\\sz%s.lc5", pDataPath, Code);
 		}
 		else
 		{
 			//沪市
-			sprintf(szPath, "D:\\new_zx_allin1\\vipdoc\\sh\\fzline\\sh%s.lc5", Code);
+			sprintf(szPath, "%s\\vipdoc\\sh\\fzline\\sh%s.lc5", pDataPath, Code);
 
 		}
 	}
