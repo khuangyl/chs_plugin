@@ -10,5 +10,6 @@ BOOL ZhongShuAnalu_BeiLi_5Min();//添加一个专门5分钟的数据扫描，
 
 BOOL ZhongShuAnaly_YuCe();
 BOOL ZhongShuAnaly_ThreeBuy();
+BOOL ZhongShuAnaly_YuCe_XiangShang();
 
 #endif

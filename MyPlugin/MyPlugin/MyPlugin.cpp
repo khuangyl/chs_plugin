@@ -28,6 +28,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 PDATAIOFUNC	 g_pFuncCallBack;
 
 BOOL Handle30MinData(char * Code, short nSetCode, short DataType);
+BOOL Handle5Min3Buy(char * Code, short nSetCode, short DataType);
 //获取回调函数
 void RegisterDataInterface(PDATAIOFUNC pfn)
 {
@@ -102,10 +103,14 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 		}
 	}
 
-	if(PER_MONTH == DataType)
+	if(PER_MIN30 == DataType)
 	{
 		//月线已经给30分钟的数据占用了，因为30分钟的数据不能直接有，所以需要
 		return Handle30MinData(Code, nSetCode, DataType);
+	}
+	else if(PER_MONTH == DataType)
+	{
+		return Handle5Min3Buy(Code, nSetCode, DataType);
 	}
 
 	char sztmp[128] = {0};
@@ -121,7 +126,7 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 	
 	char szPath[MAX_PATH] = {0};
 
-	if(DataType == PER_MIN5 || DataType == PER_HOUR || DataType == PER_WEEK)//1小时的就是预测5分钟
+	if(DataType == PER_MIN5 || DataType == PER_WEEK)//1小时的就是预测5分钟
 	{
 		//5分钟
 		if(nSetCode == 0)
@@ -136,7 +141,7 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 
 		}
 	}
-	else if(DataType == PER_MIN1 || DataType == PER_MIN30 || DataType == PER_DAY)//30分钟就是预测1分钟
+	else if(DataType == PER_MIN1 || DataType == PER_DAY)//30分钟就是预测1分钟
 	{
 		//1分钟
 		if(nSetCode == 0)
@@ -227,11 +232,6 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 				bRet = ZhongShuAnalu_BeiLi();
 				//bRet = ZhongShuAnalu_BeiLi_5Min();
 			}
-			else if(PER_MIN30 == DataType || DataType == PER_HOUR)
-			{
-				//1个小时是预测的
-				bRet = ZhongShuAnaly_YuCe();
-			}
 			else if(DataType == PER_DAY)
 			{
 				bRet = ZhongShuAnaly_ThreeBuy();//1分钟的三买
@@ -299,7 +299,7 @@ BOOL Handle30MinData(char * Code, short nSetCode, short DataType)
 
 	char szPath[MAX_PATH] = {0};
 
-	if(DataType == PER_MONTH)//1小时的就是预测5分钟
+	if(DataType == PER_MIN30)//1小时的就是预测5分钟
 	{
 		//5分钟
 		if(nSetCode == 0)
@@ -404,11 +404,148 @@ BOOL Handle30MinData(char * Code, short nSetCode, short DataType)
 
 			BOOL bRet = FALSE;
 
-			if(DataType == PER_MONTH)
+		
+			//1分钟
+			bRet = ZhongShuAnalu_BeiLi();
+			
+
+			CloseHandle(hFile);
+			delete[] szBuff;
+			delete[] pHigh;
+			delete[] pLow;
+			return bRet;
+		}
+		__except(1)
+		{
+			OutputDebugStringA("[chs] 选股的时候出现异常");
+			//if(IsDebuggerPresent())
+			//{
+			//	__asm int 3
+			//}
+			delete[] szBuff;
+			delete[] pHigh;
+			delete[] pLow;
+			CloseHandle(hFile);
+			return FALSE;
+		}
+
+
+	}
+	else
+	{
+		char szbuff[256] = {0};
+		sprintf(szbuff,"[chs] 打不开文件 错误码=%d", GetLastError());
+		OutputDebugStringA(szbuff);
+	}
+
+	return FALSE;
+}
+
+BOOL Handle5Min3Buy(char * Code, short nSetCode, short DataType)
+{
+	char sztmp[128] = {0};
+	sprintf(sztmp, "[chs] Code=%s", Code);
+
+	if(strcmp(Code, "300372") == 0 )
+	{
+		return FALSE;
+	}
+	OutputDebugStringA(sztmp);
+	BOOL nRet = FALSE;
+
+	char szPath[MAX_PATH] = {0};
+
+	if(DataType == PER_MONTH)//1小时的就是预测5分钟
+	{
+		//5分钟
+		if(nSetCode == 0)
+		{
+			//深市
+			sprintf(szPath, "%s\\vipdoc\\sz\\fzline\\sz%s.lc5", pDataPath, Code);
+		}
+		else
+		{
+			//沪市
+			sprintf(szPath, "%s\\vipdoc\\sh\\fzline\\sh%s.lc5", pDataPath, Code);
+
+		}
+	}
+
+
+	{
+		char szTempp[MAX_PATH] = {0};
+		sprintf(szTempp, "[chs] szPath=%s", szPath);
+		OutputDebugStringA(szTempp);
+	}
+
+
+	HANDLE hFile = CreateFile(szPath,GENERIC_READ, FILE_SHARE_READ,NULL, OPEN_EXISTING, FILE_ATTRIBUTE_ARCHIVE, NULL);
+
+	if(hFile != INVALID_HANDLE_VALUE)
+	{
+		DWORD dwHigh = 0;
+		DWORD dwSize = GetFileSize(hFile, &dwHigh);
+
+		char *szBuff  = new char[dwSize];
+
+		DWORD dwOut = 0;
+		ReadFile(hFile, szBuff, dwSize, &dwOut, NULL);
+
+		int nCount = dwSize/32;
+
+
+
+		float *pHigh = new float[nCount];
+		float *pLow = new float[nCount];
+
+		char *pbuf = szBuff;
+
+		int nnnkkk = 0;//这个才是真正的计数器，5分钟的数据要合并成30分钟的数据就是要这样的
+
+		float fMax = 0;
+		float fMin = 10000.01;
+
+		for (int n = 0; n < nCount; n++)
+		{
+			float f8 = GetRealPrice((*(DWORD*)&pbuf[8]));//最高价
+			float f12 = GetRealPrice((*(DWORD*)&pbuf[12]));//最低价
+
+			if(f8 > 512)
 			{
-				//1分钟
-				bRet = ZhongShuAnalu_BeiLi();
+				delete[] szBuff;
+				delete[] pHigh;
+				delete[] pLow;
+				CloseHandle(hFile);
+				return FALSE;
 			}
+			pHigh[n] = f8;
+			pLow[n] = f12;
+
+			pbuf = pbuf + 32;
+		}
+
+		float *pLowEx  = pLow;
+		float *pHighEx = pHigh;
+		if(nCount > 5000)
+		{
+			int nRemain = nCount - 5000;
+			pLowEx = (float *)((char*)pLow + nRemain * 4);
+			pHighEx = (float *)((char*)pHigh + nRemain * 4);
+			nCount = 5000;
+		}
+
+		__try
+		{
+			TestPlugin3( nCount, pHighEx, pLowEx);
+			TestPlugin4( nCount, pHighEx, pLowEx);
+			TestPlugin5( nCount, pHighEx, pLowEx);
+
+			BOOL bRet = FALSE;
+
+
+			//向上突破的预测
+			bRet = ZhongShuAnaly_YuCe_XiangShang();
+
 
 			CloseHandle(hFile);
 			delete[] szBuff;

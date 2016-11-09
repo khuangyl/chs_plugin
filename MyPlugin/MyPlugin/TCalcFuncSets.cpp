@@ -4621,3 +4621,114 @@ BOOL ZhongShuAnaly_ThreeBuy()
 	return FALSE;
 }
 
+
+
+//对中枢进行分析，预测后面的走势这个是想想预测的，
+BOOL ZhongShuAnaly_YuCe_XiangShang()
+{
+
+	OutputDebugStringA("[chs] ZhongShuAnaly_YuCe_XiangShang");
+	std::vector<ZhongShuData> g_vecZhongshu;
+
+	BOOL bFlag = FALSE;
+
+	ZhongShuData ZSData;
+
+	float fkk_max;
+	float fkk_min;
+
+	for (int n = 0; n < nSize_xd_l; n++)
+	{
+		if(g_xd_l[n].XianDuan_nprop == 1)
+		{
+			bFlag = TRUE;
+			ZSData.fMax = g_xd_l[n].fMax;
+			ZSData.fMin = g_xd_l[n].fMin;
+
+			ZSData.nXDStart_Index = n;
+			ZSData.nXDStart_Before_Index = n-1;
+
+			fkk_max = g_xd_l[n].PointHigh.fVal;
+			fkk_min = g_xd_l[n].PointLow.fVal;
+			//起点，找最左边的的
+			if(g_xd_l[n].PointHigh.nIndex < g_xd_l[n].PointLow.nIndex)
+			{
+				ZSData.nIn_Index = g_xd_l[n].PointHigh.nIndex;
+				ZSData.fIn_Price = g_xd_l[n].PointHigh.fVal;
+
+			}
+			else
+			{
+				ZSData.nIn_Index = g_xd_l[n].PointLow.nIndex;
+				ZSData.fIn_Price = g_xd_l[n].PointLow.fVal;
+
+			}
+		}
+
+		if(g_xd_l[n].XianDuan_nprop == 2)
+		{
+			bFlag = FALSE;
+			fkk_max = max(fkk_max, g_xd_l[n].PointHigh.fVal);
+			fkk_min = min(fkk_min, g_xd_l[n].PointLow.fVal);
+
+			ZSData.fkk_Max = fkk_max;
+			ZSData.fkk_Min = fkk_min;
+
+			//
+			ZSData.nXDEnd_Index = n;
+
+			//起点，找最左边的的
+			if(g_xd_l[n].PointHigh.nIndex > g_xd_l[n].PointLow.nIndex)
+			{
+				ZSData.nOut_Index = g_xd_l[n].PointHigh.nIndex;
+				ZSData.fOut_Price = g_xd_l[n].PointHigh.fVal;
+			}
+			else
+			{
+				ZSData.nOut_Index = g_xd_l[n].PointLow.nIndex;
+				ZSData.fOut_Price = g_xd_l[n].PointLow.fVal;
+			}
+
+			g_vecZhongshu.push_back(ZSData);
+			
+		}
+
+		if(bFlag == TRUE)
+		{
+			fkk_max = max(fkk_max, g_xd_l[n].PointHigh.fVal);
+			fkk_min = min(fkk_min, g_xd_l[n].PointLow.fVal);
+		}
+	}
+
+	//数据收集完毕以后，开始分析
+	int nSize = g_vecZhongshu.size();
+
+	if(nSize )
+	{
+		ZhongShuData ZSData = g_vecZhongshu[nSize-1];
+
+		int nIndexx = ZSData.nXDEnd_Index;
+
+		if(nIndexx < nSize_xd_l && (nSize_xd_l - nIndexx) >= 3)
+		{
+			if(g_xd_l[nIndexx+1].Bi_Direction == UP)
+			{
+	
+				float fprice = g_xd_l[nIndexx+1].PointHigh.fVal;
+
+				float fZSprice = ZSData.fMax;
+				if(fprice > fZSprice*1.2)
+				{
+					
+					return  TRUE;
+				}
+
+			}
+		}	
+	}
+
+	OutputDebugStringA("[chs] 离开 ZhongShuAnaly_YuCe_XiangShang");
+	return FALSE;
+}
+
+
