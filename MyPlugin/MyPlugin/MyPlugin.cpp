@@ -41,6 +41,7 @@ PDATAIOFUNC	 g_pFuncCallBack;
 BOOL Handle30MinData(char * Code, short nSetCode, short DataType);
 BOOL Handle5Min3Buy(char * Code, short nSetCode, short DataType);
 BOOL Handle30Min3Buy(char * Code, short nSetCode, short DataType);
+BOOL Handle5MinTo1Min(char * Code, short nSetCode, short DataType);
 //获取回调函数
 void RegisterDataInterface(PDATAIOFUNC pfn)
 {
@@ -127,6 +128,10 @@ BOOL InputInfoThenCalc1(char * Code,short nSetCode,int Value[4],short DataType,s
 	else if(PER_SEASON == DataType)
 	{
 		return Handle30Min3Buy(Code, nSetCode, DataType);
+	}
+	else if(PER_YEAR == DataType)
+	{
+		return Handle5MinTo1Min(Code, nSetCode, DataType);
 	}
 
 	char sztmp[128] = {0};
@@ -740,6 +745,271 @@ BOOL Handle30Min3Buy(char * Code, short nSetCode, short DataType)
 			return FALSE;
 		}
 
+
+	}
+	else
+	{
+		char szbuff[256] = {0};
+		sprintf(szbuff,"[chs] 打不开文件 错误码=%d", GetLastError());
+		OutputDebugStringA(szbuff);
+	}
+
+	return FALSE;
+}
+
+
+//--------------------------这里来处理时间切换的片， 例如1分钟和5分钟的时间切换，30分钟和5分钟的切换----
+BOOL Handle5MinTo1Min(char * Code, short nSetCode, short DataType)
+{
+	if(strcmp(Code, "000935") == 0 )
+	{
+		if(IsDebuggerPresent() == TRUE)
+		{
+			__asm int 3
+		}
+	}
+	
+
+	DWORD dwTime5Min = 0;;
+	char sztmp[128] = {0};
+	sprintf(sztmp, "[chs] Code=%s", Code);
+
+	if(strcmp(Code, "300372") == 0 )
+	{
+		return FALSE;
+	}
+	OutputDebugStringA(sztmp);
+	BOOL nRet = FALSE;
+
+	char szPath5Min[MAX_PATH] = {0};
+	char szPath1Min[MAX_PATH] = {0};
+
+	if(DataType == PER_YEAR)//1小时的就是预测5分钟
+	{
+		if(nSetCode == 0)
+		{
+			//深市
+			sprintf(szPath5Min, "%s\\vipdoc\\sz\\fzline\\sz%s.lc5", pDataPath, Code);
+			sprintf(szPath1Min, "%s\\vipdoc\\sz\\minline\\sz%s.lc1", pDataPath, Code);
+		}
+		else
+		{
+			//沪市
+			sprintf(szPath5Min, "%s\\vipdoc\\sh\\fzline\\sh%s.lc5", pDataPath, Code);
+			sprintf(szPath1Min, "%s\\vipdoc\\sh\\minline\\sh%s.lc1", pDataPath, Code);
+
+		}
+	}
+
+
+
+	//首先读取5分钟的数据
+	HANDLE hFile = CreateFile(szPath5Min,GENERIC_READ, FILE_SHARE_READ,NULL, OPEN_EXISTING, FILE_ATTRIBUTE_ARCHIVE, NULL);
+
+	if(hFile != INVALID_HANDLE_VALUE)
+	{
+		DWORD dwHigh = 0;
+		DWORD dwSize = GetFileSize(hFile, &dwHigh);
+
+		char *szBuff  = new char[dwSize];
+
+		DWORD dwOut = 0;
+		ReadFile(hFile, szBuff, dwSize, &dwOut, NULL);
+		CloseHandle(hFile);
+
+		int nCount = dwSize/32;
+
+
+
+		float *pHigh = new float[nCount];
+		float *pLow = new float[nCount];
+		
+		DWORD *pdwTime = new DWORD[nCount];
+
+
+		char *pbuf = szBuff;
+
+
+		for (int n = 0; n < nCount; n++)
+		{
+			float f8 = GetRealPrice((*(DWORD*)&pbuf[8]));//最高价
+			float f12 = GetRealPrice((*(DWORD*)&pbuf[12]));//最低价
+			
+			pdwTime[n] = (*(DWORD*)&pbuf[0]);
+
+			if(f8 > 512)
+			{
+				delete[] szBuff;
+				delete[] pHigh;
+				delete[] pLow;
+				delete[] pdwTime;
+				return FALSE;
+			}
+			pHigh[n] = f8;
+			pLow[n] = f12;
+
+			pbuf = pbuf + 32;
+		}
+
+		float *pLowEx  = pLow;
+		float *pHighEx = pHigh;
+		DWORD *pdwTimeEx = pdwTime;
+
+
+		if(nCount > 5000)
+		{
+			int nRemain = nCount - 5000;
+			pLowEx    = (float *)((char*)pLow + nRemain * 4);
+			pHighEx   = (float *)((char*)pHigh + nRemain * 4);
+			pdwTimeEx = (DWORD *)((char*)pdwTime + nRemain * 4);
+			nCount = 5000;
+		}
+
+		__try
+		{
+			TestPlugin3( nCount, pHighEx, pLowEx);
+			TestPlugin4( nCount, pHighEx, pLowEx);
+			TestPlugin5( nCount, pHighEx, pLowEx);
+
+			BOOL bRet = FALSE;
+
+			//5分钟中枢分析
+			DWORD dwTime5MinIndex = 0;
+			bRet = ZhongShuAnaly_Get5MinLastZhongShu(dwTime5MinIndex);
+			dwTime5Min = pdwTimeEx[dwTime5MinIndex-1];
+
+			WORD w5low = LOWORD(dwTime5Min);
+			WORD w5high = HIWORD(dwTime5Min);
+
+			char szTemp[256] = {0};
+
+			WORD w5Mon  = w5low/100;
+			WORD w5Day  = w5low%100;
+			WORD w5Hour = w5high/60;
+			WORD w5Min  = w5high%60;
+
+			sprintf(szTemp, "[chs] 5分钟的中枢%d-%d %d:%d",
+				w5low/100, w5low%100, w5high/60, w5high%60);
+			OutputDebugStringA(szTemp);
+
+			delete[] szBuff;
+			delete[] pHigh;
+			delete[] pLow;
+			delete[] pdwTime;
+			
+			if(bRet == FALSE)
+			{
+				return FALSE;
+			}
+		}
+		__except(1)
+		{
+			OutputDebugStringA("[chs] 选股的时候出现异常");
+			delete[] szBuff;
+			delete[] pHigh;
+			delete[] pLow;
+			delete[] pdwTime;
+			
+			return FALSE;
+		}
+
+		//到这里已经处理完5分钟的数据了，然后要处理1分钟的数据
+		//找到一个时间点作为判断的标准
+		if(1)
+		{
+			hFile = CreateFile(szPath1Min,GENERIC_READ, FILE_SHARE_READ,NULL, OPEN_EXISTING, FILE_ATTRIBUTE_ARCHIVE, NULL);
+
+			if(hFile != INVALID_HANDLE_VALUE)
+			{
+				DWORD dwHigh = 0;
+				DWORD dwSize = GetFileSize(hFile, &dwHigh);
+
+				char *szBuff  = new char[dwSize];
+
+				DWORD dwOut = 0;
+				ReadFile(hFile, szBuff, dwSize, &dwOut, NULL);
+				CloseHandle(hFile);
+
+				int nCount = dwSize/32;
+
+
+
+				float *pHigh = new float[nCount];
+				float *pLow = new float[nCount];
+
+				DWORD *pdwTime = new DWORD[nCount];
+
+
+				char *pbuf = szBuff;
+
+
+				for (int n = 0; n < nCount; n++)
+				{
+					float f8 = GetRealPrice((*(DWORD*)&pbuf[8]));//最高价
+					float f12 = GetRealPrice((*(DWORD*)&pbuf[12]));//最低价
+
+					pdwTime[n] = *(DWORD*)(&pbuf[0]);
+
+					if(f8 > 512)
+					{
+						delete[] szBuff;
+						delete[] pHigh;
+						delete[] pLow;
+						delete[] pdwTime;
+						return FALSE;
+					}
+					pHigh[n] = f8;
+					pLow[n] = f12;
+
+					pbuf = pbuf + 32;
+				}
+
+				float *pLowEx  = pLow;
+				float *pHighEx = pHigh;
+				DWORD *pdwTimeEx = pdwTime;
+
+
+				if(nCount > 5000)
+				{
+					int nRemain = nCount - 5000;
+					pLowEx    = (float *)((char*)pLow + nRemain * 4);
+					pHighEx   = (float *)((char*)pHigh + nRemain * 4);
+					pdwTimeEx = (DWORD *)((char*)pdwTime + nRemain * 4);
+					nCount = 5000;
+				}
+
+				__try
+				{
+					TestPlugin3( nCount, pHighEx, pLowEx);
+					TestPlugin4( nCount, pHighEx, pLowEx);
+					TestPlugin5( nCount, pHighEx, pLowEx);
+
+					BOOL bRet = FALSE;
+
+					//1分钟中枢分析
+					bRet = ZhongShuAnaly_5To1Min(dwTime5Min, pdwTimeEx);
+
+
+
+					delete[] szBuff;
+					delete[] pHigh;
+					delete[] pLow;
+					delete[] pdwTime;
+
+					return bRet;
+				}
+				__except(1)
+				{
+					OutputDebugStringA("[chs] 选股的时候出现异常");
+					delete[] szBuff;
+					delete[] pHigh;
+					delete[] pLow;
+					delete[] pdwTime;
+
+					return FALSE;
+				}
+			}
+		}
 
 	}
 	else

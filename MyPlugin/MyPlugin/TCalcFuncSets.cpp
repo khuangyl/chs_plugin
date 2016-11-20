@@ -4843,3 +4843,249 @@ BOOL ZhongShuAnaly_YuCe_XiangShang2()
 }
 
 
+////--------------------------这里来处理时间切换的片， 例如1分钟和5分钟的时间切换，30分钟和5分钟的切换----
+
+//获取到5分钟的中枢，如果最后一个中枢的数据是最后一根，先先判断方向，如果是向上，则取前一个向下的
+BOOL ZhongShuAnaly_Get5MinLastZhongShu(DWORD &dwTime5MinIndex)
+{
+
+	OutputDebugStringA("[chs] ZhongShuAnaly_Get5MinLastZhongShu");
+	std::vector<ZhongShuData> g_vecZhongshu;
+
+	BOOL bFlag = FALSE;
+
+	ZhongShuData ZSData;
+
+	float fkk_max;
+	float fkk_min;
+
+	for (int n = 0; n < nSize_xd_l; n++)
+	{
+		if(g_xd_l[n].XianDuan_nprop == 1)
+		{
+			bFlag = TRUE;
+			ZSData.fMax = g_xd_l[n].fMax;
+			ZSData.fMin = g_xd_l[n].fMin;
+
+			ZSData.nXDStart_Index = n;
+			ZSData.nXDStart_Before_Index = n-1;
+
+			fkk_max = g_xd_l[n].PointHigh.fVal;
+			fkk_min = g_xd_l[n].PointLow.fVal;
+			//起点，找最左边的的
+			if(g_xd_l[n].PointHigh.nIndex < g_xd_l[n].PointLow.nIndex)
+			{
+				ZSData.nIn_Index = g_xd_l[n].PointHigh.nIndex;
+				ZSData.fIn_Price = g_xd_l[n].PointHigh.fVal;
+
+			}
+			else
+			{
+				ZSData.nIn_Index = g_xd_l[n].PointLow.nIndex;
+				ZSData.fIn_Price = g_xd_l[n].PointLow.fVal;
+
+			}
+		}
+
+		if(g_xd_l[n].XianDuan_nprop == 2)
+		{
+			bFlag = FALSE;
+			fkk_max = max(fkk_max, g_xd_l[n].PointHigh.fVal);
+			fkk_min = min(fkk_min, g_xd_l[n].PointLow.fVal);
+
+			ZSData.fkk_Max = fkk_max;
+			ZSData.fkk_Min = fkk_min;
+
+			//
+			ZSData.nXDEnd_Index = n;
+
+			//起点，找最左边的的
+			if(g_xd_l[n].PointHigh.nIndex > g_xd_l[n].PointLow.nIndex)
+			{
+				ZSData.nOut_Index = g_xd_l[n].PointHigh.nIndex;
+				ZSData.fOut_Price = g_xd_l[n].PointHigh.fVal;
+			}
+			else
+			{
+				ZSData.nOut_Index = g_xd_l[n].PointLow.nIndex;
+				ZSData.fOut_Price = g_xd_l[n].PointLow.fVal;
+			}
+
+			g_vecZhongshu.push_back(ZSData);
+
+		}
+
+		if(bFlag == TRUE)
+		{
+			fkk_max = max(fkk_max, g_xd_l[n].PointHigh.fVal);
+			fkk_min = min(fkk_min, g_xd_l[n].PointLow.fVal);
+		}
+	}
+
+	//数据收集完毕以后，开始分析
+	int nSize = g_vecZhongshu.size();
+
+	if(nSize )
+	{
+		ZhongShuData ZSData = g_vecZhongshu[nSize-1];
+
+		int nIndexx = ZSData.nXDEnd_Index;
+
+		if(nIndexx == nSize_xd_l-1 )
+		{
+			//假设最后一个线段，并且最后一个线段是向上，然后找出最后一个线段超过了最后一个中枢的20%，
+			if(g_xd_l[nIndexx].Bi_Direction == UP)
+			{
+				if(g_xd_l[nIndexx].PointHigh.fVal >= ZSData.fMax * 1.2)
+				{
+					dwTime5MinIndex = g_xd_l[nIndexx - 1].PointLow.nIndex;
+					return TRUE;
+				}
+			}
+		}
+		else 
+		{
+			//如果不是最后一个
+			for(int nn = nIndexx + 1; nn < nSize_xd_l; nn++)
+			{
+				if(g_xd_l[nn].PointHigh.fVal >= ZSData.fMax * 1.2)
+				{
+					
+					dwTime5MinIndex = ZSData.nOut_Index;
+					return TRUE;
+				}
+			}
+		}
+	}
+
+	OutputDebugStringA("[chs] 离开 ZhongShuAnaly_Get5MinLastZhongShu");
+	return FALSE;
+}
+
+//分析从5分钟到1分钟的时间切换
+BOOL ZhongShuAnaly_5To1Min(DWORD &dwTime5Min, DWORD *pdwTime)
+{
+	
+	OutputDebugStringA("[chs] ZhongShuAnaly_5To1Min");
+	std::vector<ZhongShuData> g_vecZhongshu;
+
+	BOOL bFlag = FALSE;
+
+	ZhongShuData ZSData;
+
+	float fkk_max;
+	float fkk_min;
+
+	for (int n = 0; n < nSize_xd_l; n++)
+	{
+		if(g_xd_l[n].XianDuan_nprop == 1)
+		{
+			bFlag = TRUE;
+			ZSData.fMax = g_xd_l[n].fMax;
+			ZSData.fMin = g_xd_l[n].fMin;
+
+			ZSData.nXDStart_Index = n;
+			ZSData.nXDStart_Before_Index = n-1;
+
+			fkk_max = g_xd_l[n].PointHigh.fVal;
+			fkk_min = g_xd_l[n].PointLow.fVal;
+			//起点，找最左边的的
+			if(g_xd_l[n].PointHigh.nIndex < g_xd_l[n].PointLow.nIndex)
+			{
+				ZSData.nIn_Index = g_xd_l[n].PointHigh.nIndex;
+				ZSData.fIn_Price = g_xd_l[n].PointHigh.fVal;
+
+			}
+			else
+			{
+				ZSData.nIn_Index = g_xd_l[n].PointLow.nIndex;
+				ZSData.fIn_Price = g_xd_l[n].PointLow.fVal;
+
+			}
+		}
+
+		if(g_xd_l[n].XianDuan_nprop == 2)
+		{
+			bFlag = FALSE;
+			fkk_max = max(fkk_max, g_xd_l[n].PointHigh.fVal);
+			fkk_min = min(fkk_min, g_xd_l[n].PointLow.fVal);
+
+			ZSData.fkk_Max = fkk_max;
+			ZSData.fkk_Min = fkk_min;
+
+			//
+			ZSData.nXDEnd_Index = n;
+
+			//起点，找最左边的的
+			if(g_xd_l[n].PointHigh.nIndex > g_xd_l[n].PointLow.nIndex)
+			{
+				ZSData.nOut_Index = g_xd_l[n].PointHigh.nIndex;
+				ZSData.fOut_Price = g_xd_l[n].PointHigh.fVal;
+			}
+			else
+			{
+				ZSData.nOut_Index = g_xd_l[n].PointLow.nIndex;
+				ZSData.fOut_Price = g_xd_l[n].PointLow.fVal;
+			}
+
+			g_vecZhongshu.push_back(ZSData);
+
+		}
+
+		if(bFlag == TRUE)
+		{
+			fkk_max = max(fkk_max, g_xd_l[n].PointHigh.fVal);
+			fkk_min = min(fkk_min, g_xd_l[n].PointLow.fVal);
+		}
+	}
+
+	//数据收集完毕以后，开始分析
+	int nSize = g_vecZhongshu.size();
+
+	if(nSize )
+	{
+		ZhongShuData ZSData = g_vecZhongshu[nSize-1];
+
+
+		//如果最后一个中枢的时间大于指定的时间
+		DWORD dwTime1Min = pdwTime[ZSData.nIn_Index];
+
+		WORD w5low = LOWORD(dwTime5Min);
+		WORD w5high = HIWORD(dwTime5Min);
+		
+		WORD w1low = LOWORD(dwTime1Min);
+		WORD w1high = HIWORD(dwTime1Min);
+
+		char szTemp[256] = {0};
+
+		WORD w5Year = (w5low/2048)+2004;
+		WORD w5Mon  = ((w5low%2048)/100);
+		WORD w5Day  = (w5low%2048)%100;
+		WORD w5Hour = w5high/60;
+		WORD w5Min  = w5high%60;
+
+		WORD w1Year = (w1low/2048)+2004;
+		WORD w1Mon  = ((w1low%2048)/100);
+		WORD w1Day  = (w1low%2048)%100;
+		WORD w1Hour = w1high/60;
+		WORD w1Min  = w1high%60;
+
+		sprintf(szTemp, "[chs] 5分钟的中枢%d-%d-%d %d:%d,1分钟的中枢%d-%d-%d %d:%d",
+			w5Year, w5Mon, w5Day, w5Hour, w5Min,
+			w1Year, w1Mon, w1Day, w1Hour, w1Min);
+		OutputDebugStringA(szTemp);
+
+		//if(dwTime1Min >= dwTime5Min)
+		if((w1low > w5low) ||(w1low >= w5low && w1high > w5high))
+		{
+			return TRUE;
+		}
+	}
+
+	OutputDebugStringA("[chs] 离开 ZhongShuAnaly_5To1Min");
+	return FALSE;
+}
+
+
+
+

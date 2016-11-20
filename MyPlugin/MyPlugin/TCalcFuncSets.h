@@ -13,4 +13,7 @@ BOOL ZhongShuAnaly_ThreeBuy();
 BOOL ZhongShuAnaly_YuCe_XiangShang();
 BOOL ZhongShuAnaly_YuCe_XiangShang2();
 
+BOOL ZhongShuAnaly_Get5MinLastZhongShu(DWORD &dwTime5MinIndex);
+BOOL ZhongShuAnaly_5To1Min(DWORD &dwTime5Min, DWORD *pdwTime);
+
 #endif
